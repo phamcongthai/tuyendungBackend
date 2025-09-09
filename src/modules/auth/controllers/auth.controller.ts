@@ -6,11 +6,20 @@ import { Response } from 'express';
 import { AuthGuard } from "@nestjs/passport";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtService } from '@nestjs/jwt';
+import { AccountsRepository } from "src/modules/accounts/repositories/accounts.repository";
+import { AccountRolesRepository } from "src/modules/account_roles/repositories/account_roles.repository";
+import { Types } from 'mongoose';
 
 @ApiTags('Authentication')
 @Controller("auth")
 export class AuthController {
-    constructor(private readonly authService: AuthService) { };
+    constructor(
+        private readonly authService: AuthService,
+        private readonly jwtService: JwtService,
+        private readonly accountsRepo: AccountsRepository,
+        private readonly accountRolesRepo: AccountRolesRepository,
+    ) { };
     @ApiOperation({
         summary: 'Register new user account',
         description: 'Creates a new user account with the provided registration details'
@@ -104,10 +113,12 @@ export class AuthController {
         const isProd = process.env.NODE_ENV === 'production';
 
         // 👉 Cookie cho Web (browser sẽ tự gửi kèm khi gọi API)
+        // Để hỗ trợ cross-site XHR (FE và BE khác origin), cần SameSite=None và Secure
+        // Lưu ý: Trình duyệt hiện đại chấp nhận Secure trên localhost
         res.cookie('token', token, {
             httpOnly: true,
-            secure: isProd,
-            sameSite: isProd ? 'none' : 'lax',
+            secure: true,
+            sameSite: 'none',
             maxAge: 1000 * 60 * 60, // 1h
         });
 
@@ -137,8 +148,8 @@ export class AuthController {
         const isProd = process.env.NODE_ENV === 'production';
         res.cookie('token', '', {
             httpOnly: true,
-            secure: isProd,
-            sameSite: isProd ? 'none' : 'lax',
+            secure: true,
+            sameSite: 'none',
             maxAge: 0,
         });
         return { message: 'Đăng xuất thành công' };
@@ -169,9 +180,51 @@ export class AuthController {
     @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing token' })
     @ApiBearerAuth()
     @Get('me')
-    @UseGuards(JwtAuthGuard)
     async getProfile(@Req() req) {
-        return req.user;
+        // Hỗ trợ cả Authorization: Bearer và cookie HttpOnly
+        const authHeader: string | undefined = req.headers?.['authorization'] || req.headers?.['Authorization'];
+        let token: string | null = null;
+        if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+            token = authHeader.slice(7);
+        }
+        if (!token) {
+            token = req?.cookies?.['token'] || null;
+        }
+
+        if (!token) {
+            // Không đăng nhập -> trả 200 với null để FE tự xử lý, tránh 401 gây redirect loop
+            return null;
+        }
+
+        try {
+            const payload: any = this.jwtService.verify(token, {
+                secret: process.env.JWT_SECRET || 'donthackmepls!',
+            });
+
+            if (!payload?.sub || !payload?.email) {
+                return null;
+            }
+
+            const user = await this.accountsRepo.findOne(payload.sub);
+            if (!user) {
+                return null;
+            }
+
+            const accountId = new Types.ObjectId(payload.sub);
+            const roles = await this.accountRolesRepo.findRolesByAccountId(accountId);
+
+            return {
+                id: payload.sub,
+                email: payload.email,
+                roles,
+                fullName: user.fullName,
+                phone: user.phone,
+                isVerified: user.isVerified,
+            };
+        } catch (e) {
+            // Token không hợp lệ/hết hạn -> trả null (200)
+            return null;
+        }
     }
     @Get('verify')
     async verifyEmail(@Query('token') token: string) {

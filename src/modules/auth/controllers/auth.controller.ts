@@ -71,7 +71,7 @@ export class AuthController {
     }
     @ApiOperation({
         summary: 'User login',
-        description: 'Authenticates user and returns JWT token in HTTP-only cookie'
+        description: 'Authenticates user. Web receives HttpOnly cookie, mobile receives token in response.'
     })
     @ApiResponse({
         status: 200,
@@ -100,16 +100,24 @@ export class AuthController {
     @Post('login')
     async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
         const { token, user } = await this.authService.login(loginDto);
+
         const isProd = process.env.NODE_ENV === 'production';
+
+        // 👉 Cookie cho Web (browser sẽ tự gửi kèm khi gọi API)
         res.cookie('token', token, {
             httpOnly: true,
             secure: isProd,
             sameSite: isProd ? 'none' : 'lax',
-            maxAge: 1000 * 60 * 60, // 1 giờ
+            maxAge: 1000 * 60 * 60, // 1h
         });
 
-        return { user };
+        // 👉 Token cho Mobile (mobile sẽ lưu local storage/secure storage)
+        return {
+            user,
+            token, // mobile dùng Authorization: Bearer <token>
+        };
     }
+
     @ApiOperation({
         summary: 'User logout',
         description: 'Logs out user by clearing the authentication cookie'
@@ -171,7 +179,7 @@ export class AuthController {
         return this.authService.verifyEmail(token);
     }
     @Post('resend-verification')
-    async resend(@Body('email') email : string){
+    async resend(@Body('email') email: string) {
         return this.authService.resendEmail(email);
     }
 }

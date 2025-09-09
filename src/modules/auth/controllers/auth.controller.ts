@@ -100,10 +100,11 @@ export class AuthController {
     @Post('login')
     async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
         const { token, user } = await this.authService.login(loginDto);
+        const isProd = process.env.NODE_ENV === 'production';
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: isProd,
+            sameSite: isProd ? 'none' : 'lax',
             maxAge: 1000 * 60 * 60, // 1 giờ
         });
 
@@ -125,10 +126,11 @@ export class AuthController {
     })
     @Post('logout')
     async logout(@Res({ passthrough: true }) res: Response) {
+        const isProd = process.env.NODE_ENV === 'production';
         res.cookie('token', '', {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: isProd,
+            sameSite: isProd ? 'none' : 'lax',
             maxAge: 0,
         });
         return { message: 'Đăng xuất thành công' };

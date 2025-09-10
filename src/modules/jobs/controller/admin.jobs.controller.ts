@@ -246,6 +246,40 @@ export class AdminJobsController {
   }
 
   @ApiOperation({ 
+    summary: 'Update job',
+    description: 'Updates an existing job with new data'
+  })
+  @ApiParam({ name: 'id', type: String, description: 'Job ID to update' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ 
+    type: UpdateJobDto,
+    description: 'Job update data with optional files'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Job updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Job updated successfully' },
+        job: {
+          type: 'object',
+          properties: {
+            _id: { type: 'string' },
+            title: { type: 'string' },
+            jobType: { type: 'string' },
+            workingMode: { type: 'string' },
+            location: { type: 'string' },
+            isActive: { type: 'boolean' }
+          }
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Invalid job data' })
+  @ApiResponse({ status: 404, description: 'Job not found' })
+
+  @ApiOperation({ 
     summary: 'Delete job (soft delete)',
     description: 'Soft deletes a job by setting deleted flag to true'
   })

@@ -4,6 +4,7 @@ import {
 	Body,
 	Get,
 	Patch,
+	Delete,
 	UseGuards,
 	UseInterceptors,
 	UploadedFile,
@@ -41,7 +42,7 @@ export class UserController {
 
 	@Patch('me')
 	@ApiOperation({ summary: 'Cập nhật hồ sơ user hiện tại' })
-	updateMe(@Req() req: any, @Body() body: any) {
+	updateMe(@Req() req: any, @Body() body: UpdateUserDto) {
 		const accountId = req.user?.id as string;
 		return this.usersService.updateMe(accountId, body);
 	}
@@ -53,5 +54,13 @@ export class UserController {
 	uploadAvatar(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
 		const accountId = req.user?.id as string;
 		return this.usersService.uploadAvatar(accountId, file);
+	}
+
+	@Delete('me/cv')
+	@ApiOperation({ summary: 'Xóa CV của user hiện tại' })
+	@ApiResponse({ status: 200, description: 'Đã xóa CV thành công' })
+	deleteCv(@Req() req: any) {
+		const accountId = req.user?.id as string;
+		return this.usersService.deleteCv(accountId);
 	}
 }

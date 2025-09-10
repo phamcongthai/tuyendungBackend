@@ -45,10 +45,17 @@ export class UsersRepository {
 		return user;
 	}
 
+	async findById(userId: string) {
+		const userObjectId = new Types.ObjectId(userId);
+		const user = await this.userModel.findById(userObjectId);
+		if (!user) throw new BadRequestException('User not found');
+		return user;
+	}
+
 	async updateByAccountId(accountId: string, payload: any) {
 		const allowed = [
 			'avatar','dateOfBirth','gender','city',
-			'desiredPosition','summaryExperience','skills','cvData'
+			'desiredPosition','summaryExperience','skills','cvData','cvId','cvFields'
 		];
 		const update: any = {};
 		for (const key of allowed) {

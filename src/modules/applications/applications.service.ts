@@ -8,14 +8,14 @@ export class ApplicationsService {
     private readonly repo: ApplicationsRepository,
   ) {}
 
-  async createFromAccount(accountId: string, jobId: string, note?: string, resumeUrl?: string, fullName?: string) {
+  async createFromAccount(accountId: string, jobId: string, coverLetter?: string) {
     if (!jobId || !Types.ObjectId.isValid(jobId)) {
       throw new BadRequestException('jobId không hợp lệ');
     }
     if (!accountId || !Types.ObjectId.isValid(accountId)) {
       throw new BadRequestException('accountId không hợp lệ');
     }
-    return this.repo.create(accountId, jobId, note, resumeUrl);
+    return this.repo.create(accountId, jobId, coverLetter);
   }
 
   findById(id: string) {
@@ -40,8 +40,8 @@ export class ApplicationsService {
     return this.repo.updateStatus(id, status, note);
   }
 
-  withdrawByUser(userId: string, id: string) {
-    return this.repo.withdrawByUser(userId, id);
+  withdrawByUser(accountId: string, id: string) {
+    return this.repo.withdrawByUser(accountId, id);
   }
 }
 

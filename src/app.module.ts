@@ -17,6 +17,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { DashboardModule } from './modules/dashboards/dashboard.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
+import { CvSampleModule } from './modules/cv_sample/cv-sample.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -45,7 +47,9 @@ import { ApplicationsModule } from './modules/applications/applications.module';
     AuthModule,
     DashboardModule,
     CompaniesModule,
-    ApplicationsModule
+    ApplicationsModule,
+    CvSampleModule,
+    UploadModule
   ],
   controllers: [AppController],
   providers: [AppService],

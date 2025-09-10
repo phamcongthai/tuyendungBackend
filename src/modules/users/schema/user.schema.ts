@@ -35,9 +35,13 @@ export class User {
   @Prop({ type: [String], default: [] })
   skills: string[];
 
-  // CV data saved from GrapesJS (html, css, fields)
-  @Prop({ type: Object, default: null })
-  cvData: any;
+  // CV template ID reference
+  @Prop({ type: Types.ObjectId, ref: 'CvSample', default: null })
+  cvId: Types.ObjectId;
+
+  // CV fields data (simple key-value pairs for template fields)
+  @Prop({ type: Object, default: {} })
+  cvFields: Record<string, string>;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

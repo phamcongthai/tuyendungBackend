@@ -5,7 +5,10 @@ import {
   IsBoolean,
   MinLength,
   MaxLength,
+  IsObject,
+  IsMongoId,
 } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -42,4 +45,16 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsMongoId()
+  cvId?: Types.ObjectId;
+
+  @IsOptional()
+  @IsObject()
+  cvFields?: Record<string, string>;
+
+  @IsOptional()
+  @IsObject()
+  cvData?: any;
 }

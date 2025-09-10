@@ -17,12 +17,11 @@ export class ApplicationsController {
   // Ứng viên nộp đơn
   @Post()
   @ApiOperation({ summary: 'Nộp đơn ứng tuyển' })
-  @ApiBody({ schema: { properties: { jobId: { type: 'string', example: '65f1c0d2a1b2c3d4e5f6a7b8' }, note: { type: 'string', example: 'Quan tâm vị trí này' }, resumeUrl: { type: 'string', example: 'https://cloudinary.com/abc.pdf' } } } })
+  @ApiBody({ schema: { properties: { jobId: { type: 'string', example: '65f1c0d2a1b2c3d4e5f6a7b8' }, coverLetter: { type: 'string', example: 'Quan tâm vị trí này' } } } })
   @ApiResponse({ status: 201, description: 'Tạo đơn ứng tuyển thành công' })
-  create(@Req() req: any, @Body() body: { jobId: string; note?: string; resumeUrl?: string }) {
+  create(@Req() req: any, @Body() body: { jobId: string; coverLetter?: string }) {
     const accountId = req.user?.id as string;
-    const fullName = req.user?.fullName as string | undefined;
-    return this.service.createFromAccount(accountId, body.jobId, body.note, body.resumeUrl, fullName);
+    return this.service.createFromAccount(accountId, body.jobId, body.coverLetter);
   }
 
   // Upload resume (pdf/doc/docx) -> Cloudinary (resource_type: raw)
@@ -122,12 +121,12 @@ export class ApplicationsController {
   @Patch(':id/withdraw')
   @ApiOperation({ summary: 'Ứng viên tự hủy đơn' })
   @ApiParam({ name: 'id', required: true })
-  @ApiBody({ schema: { properties: { userId: { type: 'string' } } } })
   withdraw(
     @Param('id') id: string,
-    @Body() body: { userId: string },
+    @Req() req: any,
   ) {
-    return this.service.withdrawByUser(body.userId, id);
+    const accountId = req.user?.id as string;
+    return this.service.withdrawByUser(accountId, id);
   }
 }
 

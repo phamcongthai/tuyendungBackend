@@ -25,6 +25,12 @@ export class UsersService {
 
   async updateMe(accountId: string, payload: any) {
     if (!accountId) throw new BadRequestException('accountId is required');
+    
+    // Convert cvId string to ObjectId if provided
+    if (payload.cvId && typeof payload.cvId === 'string') {
+      payload.cvId = new Types.ObjectId(payload.cvId);
+    }
+    
     return this.usersRepo.updateByAccountId(accountId, payload);
   }
 
@@ -49,5 +55,40 @@ export class UsersService {
     });
     const url: string = result?.secure_url || '';
     return this.usersRepo.setAvatarByAccountId(accountId, url);
+  }
+
+  // CV-related methods
+  async findById(userId: string) {
+    if (!userId) throw new BadRequestException('userId is required');
+    return this.usersRepo.findById(userId);
+  }
+
+  async saveCv(accountId: string, cvId: string, cvFields: any) {
+    if (!accountId) throw new BadRequestException('accountId is required');
+    if (!cvId) throw new BadRequestException('cvId is required');
+
+    return this.usersRepo.updateByAccountId(accountId, {
+      cvId: new Types.ObjectId(cvId),
+      cvFields: cvFields || {}
+    });
+  }
+
+  async getUserCv(accountId: string) {
+    if (!accountId) throw new BadRequestException('accountId is required');
+    const user = await this.usersRepo.getByAccountId(accountId);
+    if (!user) throw new BadRequestException('User not found');
+
+    return {
+      cvId: user.cvId,
+      cvFields: user.cvFields
+    };
+  }
+
+  async deleteCv(accountId: string) {
+    if (!accountId) throw new BadRequestException('accountId is required');
+    return this.usersRepo.updateByAccountId(accountId, {
+      cvId: null,
+      cvFields: {}
+    });
   }
 }

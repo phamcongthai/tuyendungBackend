@@ -13,7 +13,7 @@ export class ApplicationsRepository {
     @InjectModel(Job.name) private readonly jobModel: Model<JobDocument>,
   ) {}
 
-  async create(accountId: string, jobId: string, note?: string, resumeUrl?: string, userId?: string): Promise<Application> {
+  async create(accountId: string, jobId: string, coverLetter?: string): Promise<Application> {
     if (!accountId || !jobId) {
       throw new BadRequestException('accountId và jobId là bắt buộc');
     }
@@ -31,11 +31,9 @@ export class ApplicationsRepository {
 
     const doc = new this.applicationModel({
       accountId: new Types.ObjectId(accountId),
-      ...(userId ? { userId: new Types.ObjectId(userId) } : {}),
       jobId: new Types.ObjectId(jobId),
-      note: note ?? null,
+      coverLetter: coverLetter ?? null,
       status: 'pending',
-      ...(resumeUrl ? { resumeUrl } : {}),
     });
     return await doc.save();
   }
@@ -43,20 +41,18 @@ export class ApplicationsRepository {
   async findById(id: string) {
     return await this.applicationModel
       .findById(id)
-      .populate({ path: 'userId', select: 'fullName email cvData avatar' })
-      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvData' })
+      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields' })
       .populate({ path: 'account', select: 'fullName email phone' })
       .populate({ path: 'jobId' });
   }
 
   async findAllByUser(userIdOrAccountId: string, page = 1, limit = 12): Promise<{ data: Application[]; total: number }> {
     const id = new Types.ObjectId(userIdOrAccountId);
-    const query = { $or: [{ userId: id }, { accountId: id }] } as any;
+    const query = { accountId: id } as any;
     const data = await this.applicationModel
       .find(query)
       .populate({ path: 'jobId' })
-      .populate({ path: 'userId', select: 'fullName email cvData avatar' })
-      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvData' })
+      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields' })
       .populate({ path: 'account', select: 'fullName email phone' })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -70,8 +66,7 @@ export class ApplicationsRepository {
     const query = { jobId: new Types.ObjectId(jobId) } as any;
     const data = await this.applicationModel
       .find(query)
-      .populate({ path: 'userId', select: 'fullName email cvData avatar' })
-      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvData' })
+      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields' })
       .populate({ path: 'account', select: 'fullName email phone' })
       .populate({ path: 'jobId' })
       .sort({ createdAt: -1 })
@@ -97,9 +92,9 @@ export class ApplicationsRepository {
     return updated;
   }
 
-  async withdrawByUser(userId: string, id: string): Promise<Application> {
+  async withdrawByUser(accountId: string, id: string): Promise<Application> {
     const updated = await this.applicationModel.findOneAndUpdate(
-      { _id: id, userId: new Types.ObjectId(userId) },
+      { _id: id, accountId: new Types.ObjectId(accountId) },
       { status: 'withdrawn' },
       { new: true },
     );

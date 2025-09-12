@@ -9,6 +9,7 @@ import {
 	UseInterceptors,
 	UploadedFile,
 	Req,
+	Param,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './user.service';
@@ -38,6 +39,24 @@ export class UserController {
 	getMe(@Req() req: any) {
 		const accountId = req.user?.id as string;
 		return this.usersService.getMe(accountId);
+	}
+
+	@Get('by-account/:accountId')
+	@ApiOperation({ summary: 'Lấy hồ sơ user theo accountId (public endpoint)' })
+	@ApiResponse({ status: 200, description: 'Lấy hồ sơ user thành công' })
+	@ApiResponse({ status: 404, description: 'Không tìm thấy user' })
+	@UseGuards() // Bỏ JWT guard cho endpoint này
+	getByAccountId(@Param('accountId') accountId: string) {
+		return this.usersService.getMe(accountId);
+	}
+
+	@Get('by-account/:accountId/cv-data')
+	@ApiOperation({ summary: 'Lấy dữ liệu CV của user theo accountId (cho recruiter)' })
+	@ApiResponse({ status: 200, description: 'Lấy dữ liệu CV thành công' })
+	@ApiResponse({ status: 404, description: 'Không tìm thấy user hoặc CV' })
+	@UseGuards() // Bỏ JWT guard cho endpoint này
+	getCvDataByAccountId(@Param('accountId') accountId: string) {
+		return this.usersService.getCvDataByAccountId(accountId);
 	}
 
 	@Patch('me')

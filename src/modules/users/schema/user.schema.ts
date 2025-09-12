@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { CvSample } from '../../cv_sample/schemas/cv-sample.schema';
 
 export type UserDocument = User & Document;
 
@@ -37,7 +38,7 @@ export class User {
 
   // CV template ID reference
   @Prop({ type: Types.ObjectId, ref: 'CvSample', default: null })
-  cvId: Types.ObjectId;
+  cvId: Types.ObjectId | CvSample;
 
   // CV fields data (simple key-value pairs for template fields)
   @Prop({ type: Object, default: {} })

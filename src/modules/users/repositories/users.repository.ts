@@ -83,4 +83,39 @@ export class UsersRepository {
 		if (!updated) throw new BadRequestException('User not found');
 		return updated;
 	}
+
+	async getCvDataByAccountId(accountId: string) {
+		const accountObjectId = new Types.ObjectId(accountId);
+		const user = await this.userModel
+			.findOne({ accountId: accountObjectId })
+			.populate('cvId')
+			.select('cvId cvFields avatar desiredPosition summaryExperience skills accountId')
+			.exec();
+		
+		if (!user) {
+			throw new BadRequestException('User not found');
+		}
+
+		const cv: any = user.cvId || null;
+
+		return {
+			user: {
+				_id: user._id,
+				accountId: user.accountId,
+				avatar: user.avatar,
+				desiredPosition: user.desiredPosition,
+				summaryExperience: user.summaryExperience,
+				skills: user.skills,
+				cvId: user.cvId,
+				cvFields: user.cvFields
+			},
+			cvTemplate: cv ? {
+				_id: cv._id,
+				name: cv.name,
+				title: cv.title,
+				html: cv.html,
+				css: cv.css
+			} : null
+		};
+	}
 }

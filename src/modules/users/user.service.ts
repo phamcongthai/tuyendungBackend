@@ -91,4 +91,9 @@ export class UsersService {
       cvFields: {}
     });
   }
+
+  async getCvDataByAccountId(accountId: string) {
+    if (!accountId) throw new BadRequestException('accountId is required');
+    return this.usersRepo.getCvDataByAccountId(accountId);
+  }
 }

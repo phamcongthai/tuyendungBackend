@@ -49,6 +49,7 @@ async function bootstrap() {
     .addTag('Roles', 'Role management endpoints')
     .addTag('Recruiters', 'Recruiter management endpoints')
     .addTag('Upload', 'File upload endpoints')
+    .addTag('CV Builder', 'CV builder and template management endpoints')
     .addBearerAuth()
     .build();
 

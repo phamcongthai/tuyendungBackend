@@ -15,6 +15,8 @@ import {
   import { JobsService } from '../jobs.service';
   import { CreateJobDto } from '../dto/request/create-job.dto';
   import { UpdateJobDto } from '../dto/request/update-job.dto';
+import { JobResponseDto } from '../dto/response/job-response.dto';
+import { plainToInstance } from 'class-transformer';
   import {
     ApiTags,
     ApiOperation,
@@ -34,6 +36,48 @@ import {
   @Roles('Recruiter')
   export class RecruiterJobsController {
     constructor(private readonly jobsService: JobsService) {}
+  
+    private normalizeJobIds(job: any) {
+      if (!job) return job;
+      const obj = typeof job.toObject === 'function' ? job.toObject() : { ...job };
+      // _id
+      if (obj._id && typeof obj._id !== 'string') {
+        obj._id = String(obj._id);
+      }
+      // recruiterId
+      if (obj.recruiterId && typeof obj.recruiterId !== 'string') {
+        obj.recruiterId = String(obj.recruiterId);
+      }
+      // companyId can be ObjectId or populated object
+      if (obj.companyId) {
+        if (typeof obj.companyId === 'object') {
+          const companyObj = typeof obj.companyId.toObject === 'function'
+            ? obj.companyId.toObject()
+            : { ...obj.companyId };
+          if (companyObj._id && typeof companyObj._id !== 'string') {
+            companyObj._id = String(companyObj._id);
+          }
+          obj.companyId = companyObj;
+        } else if (typeof obj.companyId !== 'string') {
+          obj.companyId = String(obj.companyId);
+        }
+      }
+      // jobCategoryId can be ObjectId or populated object
+      if (obj.jobCategoryId) {
+        if (typeof obj.jobCategoryId === 'object') {
+          const categoryObj = typeof obj.jobCategoryId.toObject === 'function'
+            ? obj.jobCategoryId.toObject()
+            : { ...obj.jobCategoryId };
+          if (categoryObj._id && typeof categoryObj._id !== 'string') {
+            categoryObj._id = String(categoryObj._id);
+          }
+          obj.jobCategoryId = categoryObj;
+        } else if (typeof obj.jobCategoryId !== 'string') {
+          obj.jobCategoryId = String(obj.jobCategoryId);
+        }
+      }
+      return obj;
+    }
   
     @ApiOperation({
       summary: 'Get all jobs for recruiter',
@@ -59,7 +103,7 @@ import {
       @Query('jobCategoryId') jobCategoryId?: string,
     ) {
       const recruiterId = req.user.id;
-      return this.jobsService.findAllByRecruiter(
+      const { data, total } = await this.jobsService.findAllByRecruiter(
         recruiterId, 
         Number(page), 
         Number(limit), 
@@ -69,6 +113,16 @@ import {
         workingMode,
         jobCategoryId
       );
+
+      // Normalize IDs to strings for client compatibility
+      const processedData = data.map((job: any) => this.normalizeJobIds(job));
+
+      return {
+        data: plainToInstance(JobResponseDto, processedData, {
+          excludeExtraneousValues: true
+        }),
+        total
+      };
     }
   
     @ApiOperation({
@@ -88,8 +142,19 @@ import {
       @Body() createJobDto: CreateJobDto,
       @UploadedFiles() files?: Express.Multer.File[],
     ) {
+      console.log('🚨 POST /recruiters/jobs - CREATING NEW JOB!');
+      console.log('🚨 Request body:', createJobDto);
+      console.log('🚨 Recruiter ID:', req.user.id);
       const recruiterId = req.user.id;
-      return this.jobsService.createByRecruiter(recruiterId, createJobDto, files);
+      // Ensure body cannot override recruiter/company by accident
+      (createJobDto as any).recruiterId = undefined;
+      (createJobDto as any).companyId = undefined;
+      const job = await this.jobsService.createByRecruiter(recruiterId, createJobDto, files);
+      
+      // Normalize IDs to strings for client compatibility
+      let processedJob: any = this.normalizeJobIds(job as any);
+      
+      return plainToInstance(JobResponseDto, processedJob, { excludeExtraneousValues: true });
     }
   
     @ApiOperation({
@@ -112,7 +177,12 @@ import {
       @UploadedFiles() files?: Express.Multer.File[],
     ) {
       const recruiterId = req.user.id;
-      return this.jobsService.updateByRecruiter(recruiterId, id, updateJobDto, files);
+      const job = await this.jobsService.updateByRecruiter(recruiterId, id, updateJobDto, files);
+      
+      // Normalize IDs to strings for client compatibility
+      let processedJob: any = this.normalizeJobIds(job as any);
+      
+      return plainToInstance(JobResponseDto, processedJob, { excludeExtraneousValues: true });
     }
   
     @ApiOperation({
@@ -124,7 +194,16 @@ import {
     @Get(':id')
     async detail(@Req() req: any, @Param('id') id: string) {
       const recruiterId = req.user.id;
-      return this.jobsService.detailByRecruiter(recruiterId, id);
+      const job = await this.jobsService.detailByRecruiter(recruiterId, id);
+      
+      // Convert recruiterId from ObjectId to string for client compatibility
+      let processedJob: any = typeof (job as any).toObject === 'function' ? (job as any).toObject() : { ...(job as any) };
+      // Only convert recruiterId to string
+      if (processedJob && processedJob.recruiterId && typeof processedJob.recruiterId !== 'string') {
+        processedJob.recruiterId = String(processedJob.recruiterId);
+      }
+      
+      return plainToInstance(JobResponseDto, processedJob, { excludeExtraneousValues: true });
     }
   
     @ApiOperation({

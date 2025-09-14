@@ -5,7 +5,6 @@ import { UsersModule } from '../users/users.module';
 import { AccountRolesModule } from '../account_roles/account_roles.module';
 import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
-import { AuthRepository } from './repositories/auth.repository';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies.ts/jwt.strategy';
@@ -24,7 +23,7 @@ import { EmailVerification, EmailVerificationDocument, EmailVerificationSchema }
     MongooseModule.forFeature([{ name: EmailVerification.name, schema: EmailVerificationSchema }])
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthRepository, JwtStrategy],
-  exports: [AuthService, AuthRepository, JwtStrategy],
+  providers: [AuthService, JwtStrategy],
+  exports: [AuthService, JwtStrategy],
 })
 export class AuthModule {}

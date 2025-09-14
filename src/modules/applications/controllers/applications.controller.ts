@@ -14,6 +14,17 @@ import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, 
 export class ApplicationsController {
   constructor(private readonly service: ApplicationsService) {}
 
+  // Kiểm tra ứng viên đã ứng tuyển job chưa
+  @Get('check')
+  @ApiOperation({ summary: 'Kiểm tra ứng viên đã ứng tuyển job chưa' })
+  @ApiQuery({ name: 'jobId', required: true, description: 'ID của job' })
+  @ApiResponse({ status: 200, description: 'Trả về trạng thái ứng tuyển' })
+  async checkApplication(@Req() req: any, @Query('jobId') jobId: string) {
+    const accountId = req.user?.id as string;
+    const hasApplied = await this.service.checkApplication(accountId, jobId);
+    return { hasApplied };
+  }
+
   // Ứng viên nộp đơn
   @Post()
   @ApiOperation({ summary: 'Nộp đơn ứng tuyển' })

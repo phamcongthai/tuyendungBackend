@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Types } from 'mongoose';
-import { AuthRepository } from "../repositories/auth.repository";
 import { Model } from 'mongoose';
 import { RegisterForUserDto, RegisterForRecruiterDto } from "../dto/register.dto";
 import { AccountsService } from './../../accounts/accounts.service';
@@ -9,16 +8,13 @@ import { UsersService } from './../../users/user.service';
 import { LoginDto } from "../dto/login.dto";
 import { EmailVerification, EmailVerificationDocument } from "../schemas/email_verifications.schema"
 import * as crypto from 'crypto';
-import { AccountsRepository } from "src/modules/accounts/repositories/accounts.repository";
 import { sendVerificationEmail } from "src/utils/sendEmail.util";
 
 @Injectable()
 export class AuthService {
     constructor(
-        private readonly Authrepo: AuthRepository,
         private readonly AccountsService: AccountsService,
         @InjectModel(EmailVerification.name) private emailVerificationModel: Model<EmailVerificationDocument>,
-        private readonly AccountRepo: AccountsRepository,
         private readonly UsersService: UsersService,
     ) {}
 
@@ -50,31 +46,50 @@ export class AuthService {
     }
 
     async registerRecruiter(registerDto: RegisterForRecruiterDto) {
-        const recruiter = await this.AccountsService.registerForRecruiter(registerDto);
-
-        const token = crypto.randomBytes(32).toString('hex');
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 1);
-
-        await this.emailVerificationModel.create({
-            accountId: recruiter._id,
-            token,
-            expiresAt,
-        });
-
-        await sendVerificationEmail(recruiter.email, token);
-
-        // Also create blank user profile for recruiter if needed (optional)
         try {
-            await this.UsersService.initBlankUser(String(recruiter._id), registerDto.fullName);
-        } catch (e) {
-            // non-blocking
-        }
+            console.log('Starting recruiter registration with data:', registerDto);
+            
+            const recruiter = await this.AccountsService.registerForRecruiter(registerDto);
+            console.log('Account created successfully:', recruiter._id);
 
-        return {
-            message: "Đăng ký thành công. Vui lòng xác thực email.",
-            recruiter
-        };
+            const token = crypto.randomBytes(32).toString('hex');
+            const expiresAt = new Date();
+            expiresAt.setHours(expiresAt.getHours() + 1);
+
+            await this.emailVerificationModel.create({
+                accountId: recruiter._id,
+                token,
+                expiresAt,
+            });
+            console.log('Email verification record created');
+
+            try {
+                await sendVerificationEmail(recruiter.email, token);
+                console.log('Verification email sent successfully');
+            } catch (emailError) {
+                console.error('Error sending verification email:', emailError);
+                // Không throw error để không ảnh hưởng đến việc tạo account
+            }
+
+            // Also create blank user profile for recruiter if needed (optional)
+            try {
+                await this.UsersService.initBlankUser(String(recruiter._id), registerDto.fullName);
+                console.log('Blank user profile created successfully');
+            } catch (e) {
+                console.error('Error creating blank user profile:', e);
+                // non-blocking
+            }
+
+            return {
+                message: "Đăng ký thành công. Vui lòng xác thực email.",
+                recruiter
+            };
+        } catch (error) {
+            console.error('Error in registerRecruiter:', error);
+            console.error('Error details:', error.message);
+            console.error('Error stack:', error.stack);
+            throw error;
+        }
     }
 
     async login(dto: LoginDto) {
@@ -97,7 +112,7 @@ export class AuthService {
     }
 
     async resendEmail(email: string) {
-        const account = await this.AccountRepo.findByEmail(email);
+        const account = await this.AccountsService.findByEmail(email);
         if (!account) {
             throw new NotFoundException("Tài khoản không tồn tại!");
         }

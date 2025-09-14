@@ -13,6 +13,8 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { JobsService } from '../jobs.service';
 import { CreateJobDto } from '../dto/request/create-job.dto';
 import { UpdateJobDto } from '../dto/request/update-job.dto';
+import { JobResponseDto } from '../dto/response/job-response.dto';
+import { plainToInstance } from 'class-transformer';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBody, ApiConsumes } from '@nestjs/swagger';
 
 @ApiTags('Jobs - Admin')
@@ -93,6 +95,16 @@ export class AdminJobsController {
     @Query('workingMode') workingMode?: string,
     @Query('jobCategoryId') jobCategoryId?: string,
   ) {
+    const { data, total } = await this.jobsService.findAll(
+      Number(page), 
+      Number(limit), 
+      search, 
+      status,
+      jobType,
+      workingMode,
+      jobCategoryId
+    );
+
     return this.jobsService.findAll(
       Number(page), 
       Number(limit), 

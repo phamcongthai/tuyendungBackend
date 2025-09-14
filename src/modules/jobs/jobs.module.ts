@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Job, JobSchema } from './jobs.schema';
+import { Application, ApplicationSchema } from '../applications/schemas/application.schema';
 import { JobsService } from './jobs.service';
 import { AdminJobsController } from './controller/admin.jobs.controller';
 import { PublicJobsController } from './controller/public.jobs.controller';
@@ -12,10 +13,12 @@ import { Recruiter, RecruiterSchema } from '../recruiters/schemas/recruiter.sche
   imports: [
     MongooseModule.forFeature([
       { name: Job.name, schema: JobSchema },
-      { name: Recruiter.name, schema: RecruiterSchema }
+      { name: Recruiter.name, schema: RecruiterSchema },
+      { name: Application.name, schema: ApplicationSchema }
     ])
   ],
   controllers: [AdminJobsController, PublicJobsController, RecruiterJobsController],
   providers: [JobsService, JobsRepository, RecruiterRepository],
+  exports: [JobsService],
 })
 export class JobsModule {}

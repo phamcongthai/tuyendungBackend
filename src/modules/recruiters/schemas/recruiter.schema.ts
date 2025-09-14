@@ -19,6 +19,10 @@ export class Recruiter {
   @Prop({ type: Types.ObjectId, ref: 'Account', required: true, unique: true })
   accountId: Types.ObjectId;
 
+  // Email (để tránh duplicate key error)
+  @Prop({ required: false, unique: true, sparse: true })
+  email?: string;
+
   // Liên kết tới Company
   @Prop({ type: Types.ObjectId, ref: 'Company', required: false })
   companyId: Types.ObjectId;

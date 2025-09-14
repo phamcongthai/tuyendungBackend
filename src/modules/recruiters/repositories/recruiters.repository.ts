@@ -62,6 +62,23 @@ export class RecruiterRepository {
     return this.recruiterModel.create({ ...dto, accountId });
   }
 
+  // [POST] : /recruiters/profile/empty (Create empty recruiter profile)
+  async createEmpty(id: string): Promise<RecruiterDocument> {
+    if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid accountId');
+    const accountId = new Types.ObjectId(id);
+    return this.recruiterModel.create({
+      accountId,
+      companyRole: 'member',
+      isActive: true,
+      deleted: false,
+      position: undefined,
+      gender: undefined,
+      province: undefined,
+      district: undefined,
+      avatar: null,
+    });
+  }
+
   // [PATCH] : /recruiters/profile
   async patch(id: string, dto: UpdateRecruiterDto): Promise<any> {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid accountId');

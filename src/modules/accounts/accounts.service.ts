@@ -12,7 +12,7 @@ import { AccountStatus } from './enums/accounts.enum';
 import { LoginDto } from '../auth/dto/login.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types as MTypes } from 'mongoose';
-import { Recruiter, RecruiterDocument } from '../recruiters/schemas/recruiter.schema';
+import { Recruiter, RecruiterDocument, CompanyRole } from '../recruiters/schemas/recruiter.schema';
 @Injectable()
 export class AccountsService {
   constructor(
@@ -146,12 +146,34 @@ export class AccountsService {
   });
 
   // Tạo hồ sơ Recruiter rỗng ngay sau khi tạo account
-  await this.recruiterModel.create({
-    accountId: new MTypes.ObjectId(account._id as string),
-    companyRole: 'member',
-    isActive: true,
-    deleted: false,
-  });
+  try {
+    console.log('Starting recruiter profile creation for account:', account._id);
+    
+    // Kiểm tra xem recruiter đã tồn tại chưa
+    const existingRecruiter = await this.recruiterModel.findOne({
+      accountId: new MTypes.ObjectId(account._id as string)
+    });
+
+    if (!existingRecruiter) {
+      const recruiterData = {
+        accountId: new MTypes.ObjectId(account._id as string),
+        email: account.email, // Set email để tránh duplicate key error
+        // Chỉ set trường required, các trường khác sẽ dùng default values
+      };
+      
+      console.log('Creating recruiter with data:', recruiterData);
+      const createdRecruiter = await this.recruiterModel.create(recruiterData);
+      console.log('Recruiter profile created successfully for account:', account._id, 'Recruiter ID:', createdRecruiter._id);
+    } else {
+      console.log('Recruiter profile already exists for account:', account._id);
+    }
+  } catch (error) {
+    console.error('Error creating recruiter profile:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    // Không throw error để không ảnh hưởng đến việc tạo account
+    // Recruiter profile có thể được tạo sau
+  }
 
   return account;
 }
@@ -197,5 +219,9 @@ async login(dto: LoginDto) {
         roles,
       },
     };
+  }
+
+  async findByEmail(email: string) {
+    return this.accountsRepo.findByEmail(email);
   }
 }

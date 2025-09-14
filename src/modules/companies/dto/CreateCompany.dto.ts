@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUrl, IsEmail, IsArray, ArrayNotEmpty, ValidateIf } from 'class-validator';
+import { IsString, IsOptional, IsUrl, IsEmail, IsArray, ArrayNotEmpty, ValidateIf, IsBoolean } from 'class-validator';
 
 export class CreateCompanyDto {
   @IsString()
@@ -38,4 +38,20 @@ export class CreateCompanyDto {
   @IsOptional()
   @IsString()
   size?: string;
+
+  @IsOptional()
+  @IsString()
+  taxCode?: string;
+
+  @IsOptional()
+  @IsString()
+  foundedYear?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  createdBy?: string;
 }

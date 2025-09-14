@@ -25,6 +25,25 @@ export class RecruiterService {
     };
   }
 
+  //[GET] : /recruiters/profile/ensure (Ensure recruiter profile exists)
+  async ensureProfileExists(accountId: string) {
+    const recruiter = await this.RecruiterRepository.get(accountId);
+    if (!recruiter) {
+      // Tạo recruiter profile rỗng nếu chưa có
+      const newRecruiter = await this.RecruiterRepository.createEmpty(accountId);
+      return {
+        success: true,
+        message: 'Profile created successfully',
+        data: newRecruiter
+      };
+    }
+    return {
+      success: true,
+      message: 'Profile already exists',
+      data: recruiter
+    };
+  }
+
   //[GET] : /recruiters (Get all recruiters - for admin purposes)
   async getAll() {
     const recruiters = await this.RecruiterRepository.getAll();

@@ -13,7 +13,7 @@ export class ApplicationsRepository {
     @InjectModel(Job.name) private readonly jobModel: Model<JobDocument>,
   ) {}
 
-  async create(accountId: string, jobId: string, coverLetter?: string): Promise<Application> {
+  async create(accountId: string, jobId: string, coverLetter?: string): Promise<ApplicationDocument> {
     if (!accountId || !jobId) {
       throw new BadRequestException('accountId và jobId là bắt buộc');
     }
@@ -38,12 +38,26 @@ export class ApplicationsRepository {
     return await doc.save();
   }
 
+  async checkApplication(accountId: string, jobId: string): Promise<boolean> {
+    if (!accountId || !jobId) {
+      return false;
+    }
+
+    const existing = await this.applicationModel.findOne({ 
+      accountId: new Types.ObjectId(accountId), 
+      jobId: new Types.ObjectId(jobId),
+      status: { $ne: 'withdrawn' } // Không tính các đơn đã rút
+    });
+    
+    return !!existing;
+  }
+
   async findById(id: string) {
     return await this.applicationModel
       .findById(id)
       .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields' })
       .populate({ path: 'account', select: 'fullName email phone' })
-      .populate({ path: 'jobId' });
+      .populate({ path: 'jobId', select: '_id title' });
   }
 
   async findAllByUser(userIdOrAccountId: string, page = 1, limit = 12): Promise<{ data: Application[]; total: number }> {
@@ -51,7 +65,7 @@ export class ApplicationsRepository {
     const query = { accountId: id } as any;
     const data = await this.applicationModel
       .find(query)
-      .populate({ path: 'jobId' })
+      .populate({ path: 'jobId', select: '_id title' })
       .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields' })
       .populate({ path: 'account', select: 'fullName email phone' })
       .sort({ createdAt: -1 })
@@ -68,7 +82,7 @@ export class ApplicationsRepository {
       .find(query)
       .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields' })
       .populate({ path: 'account', select: 'fullName email phone' })
-      .populate({ path: 'jobId' })
+      .populate({ path: 'jobId', select: '_id title' })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)

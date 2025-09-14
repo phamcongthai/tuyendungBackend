@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Job, JobDocument } from '../jobs.schema';
 import { CreateJobDto } from '../dto/request/create-job.dto';
 import { UpdateJobDto } from '../dto/request/update-job.dto';
@@ -15,6 +15,7 @@ export class JobsRepository {
   constructor(
     @InjectModel(Job.name) private jobsModel: Model<JobDocument>,
     private readonly recruiterRepository: RecruiterRepository,
+    @InjectModel('Application') private applicationModel: Model<any>,
   ) {}
 
   //[GET] : Lấy ra toàn bộ bản ghi 
@@ -58,7 +59,6 @@ export class JobsRepository {
 
     const data = await this.jobsModel
       .find(query)
-      .populate({ path: 'recruiterId', select: 'fullName email' })
       .populate({ 
         path: 'companyId', 
         select: 'name slug logo size address industries website description foundedYear'
@@ -66,11 +66,25 @@ export class JobsRepository {
       .populate({ path: 'jobCategoryId', select: 'title slug description' })
       .skip((page - 1) * limit)
       .limit(limit)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: 1 })
       .exec();
 
     const total = await this.jobsModel.countDocuments(query);
-    return { data, total };
+
+    // Attach applicationCount per job
+    const jobIds = data.map((j: any) => j._id);
+    const counts = await this.applicationModel.aggregate([
+      { $match: { jobId: { $in: jobIds } } },
+      { $group: { _id: '$jobId', count: { $sum: 1 } } }
+    ]);
+    const countMap = new Map<string, number>(counts.map((c: any) => [String(c._id), c.count]));
+    const dataWithCounts = data.map((j: any) => {
+      const obj = typeof j.toObject === 'function' ? j.toObject() : { ...j };
+      obj.applicationCount = countMap.get(String(j._id)) || 0;
+      return obj;
+    });
+
+    return { data: dataWithCounts as any, total };
   }
 
   //[POST] : Tạo mới bản ghi
@@ -96,9 +110,12 @@ export class JobsRepository {
       // Tạo slug duy nhất từ title
       const slug = await generateUniqueSlug<JobDocument>(this.jobsModel as any, createJobDto.title);
 
-      // Tạo job mới với slug
+      // Tạo job mới với slug và convert ObjectIds
       const newJob = new this.jobsModel({
         ...createJobDto,
+        recruiterId: new Types.ObjectId(createJobDto.recruiterId),
+        companyId: new Types.ObjectId(createJobDto.companyId),
+        jobCategoryId: createJobDto.jobCategoryId ? new Types.ObjectId(createJobDto.jobCategoryId) : undefined,
         slug,
       });
 
@@ -142,6 +159,17 @@ export class JobsRepository {
         updateData.deadline = new Date(updateData.deadline);
       }
 
+      // Convert ObjectIds nếu có
+      if (updateData.recruiterId) {
+        updateData.recruiterId = new Types.ObjectId(updateData.recruiterId);
+      }
+      if (updateData.companyId) {
+        updateData.companyId = new Types.ObjectId(updateData.companyId);
+      }
+      if (updateData.jobCategoryId) {
+        updateData.jobCategoryId = new Types.ObjectId(updateData.jobCategoryId);
+      }
+
       // Nếu có cập nhật title, cập nhật slug mới
       if (updateData.title) {
         updateData.slug = await generateUniqueSlug<JobDocument>(this.jobsModel as any, updateData.title, id);
@@ -170,13 +198,30 @@ export class JobsRepository {
   // }
 
   async detail(id: string) {
-    return await this.jobsModel.findById(id)
-      .populate({ path: 'recruiterId', select: 'fullName email' })
-      .populate({ 
-        path: 'companyId', 
-        select: 'name slug logo size address industries website description foundedYear'
-      })
-      .populate({ path: 'jobCategoryId', select: 'title slug description' });
+    try {
+      console.log('🔍 Looking up job with id:', id);
+      
+      const job = await this.jobsModel.findById(id)
+        .populate({ 
+          path: 'companyId', 
+          select: 'name slug logo size address industries website description foundedYear'
+        })
+        .populate({ path: 'jobCategoryId', select: 'title slug description' });
+      
+      console.log('📋 Job found:', !!job);
+      if (job) {
+        console.log('📋 Job recruiterId raw:', job.recruiterId);
+        console.log('📋 Job recruiterId type:', typeof job.recruiterId);
+        console.log('📋 Job populated successfully');
+      } else {
+        console.log('❌ Job not found');
+      }
+      
+      return job;
+    } catch (error) {
+      console.error('❌ Error in job detail lookup:', error);
+      throw error;
+    }
   }
 
   async findBySlug(slug: string) {
@@ -184,7 +229,6 @@ export class JobsRepository {
     return await this.jobsModel
       .findOne({ slug, deleted: false })
       .sort({ createdAt: -1 })
-      .populate({ path: 'recruiterId', select: 'fullName email' })
       .populate({ 
         path: 'companyId', 
         select: 'name slug logo size address industries website description foundedYear'
@@ -239,7 +283,7 @@ export class JobsRepository {
   ): Promise<{ data: Job[]; total: number }> {
     const query: any = {
       ...buildNameSearchQuery(search),
-      recruiterId: recruiterId,
+      recruiterId: new Types.ObjectId(recruiterId),
       deleted: false,
     };
 
@@ -269,16 +313,29 @@ export class JobsRepository {
 
     const data = await this.jobsModel
       .find(query)
-      .populate({ path: 'recruiterId', select: 'fullName email' })
       .populate({ path: 'companyId', select: 'name slug logo' })
       .populate({ path: 'jobCategoryId', select: 'title slug description' })
       .skip((page - 1) * limit)
       .limit(limit)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: 1 })
       .exec();
 
     const total = await this.jobsModel.countDocuments(query);
-    return { data, total };
+
+    // Attach applicationCount per job for recruiter view
+    const jobIds = data.map((j: any) => j._id);
+    const counts = await this.applicationModel.aggregate([
+      { $match: { jobId: { $in: jobIds } } },
+      { $group: { _id: '$jobId', count: { $sum: 1 } } }
+    ]);
+    const countMap = new Map<string, number>(counts.map((c: any) => [String(c._id), c.count]));
+    const dataWithCounts = data.map((j: any) => {
+      const obj = typeof j.toObject === 'function' ? j.toObject() : { ...j };
+      obj.applicationCount = countMap.get(String(j._id)) || 0;
+      return obj;
+    });
+
+    return { data: dataWithCounts as any, total };
   }
 
   //[POST] : Tạo mới job bởi recruiter
@@ -303,7 +360,7 @@ export class JobsRepository {
       // Tạo job mới với recruiterId, companyId và slug
       const newJob = new this.jobsModel({
         ...createJobDto,
-        recruiterId: recruiterId,
+        recruiterId: new Types.ObjectId(recruiterId),
         companyId: recruiter.companyId,
         slug,
       });
@@ -324,7 +381,7 @@ export class JobsRepository {
     try {
       const existingJob = await this.jobsModel.findOne({ 
         _id: id, 
-        recruiterId: recruiterId,
+        recruiterId: new Types.ObjectId(recruiterId),
         deleted: false 
       });
       
@@ -348,8 +405,7 @@ export class JobsRepository {
         id,
         updateData,
         { new: true }
-      ).populate({ path: 'recruiterId', select: 'fullName email' })
-       .populate({ 
+      ).populate({ 
         path: 'companyId', 
         select: 'name slug logo size address industries website description foundedYear'
        })
@@ -370,10 +426,9 @@ export class JobsRepository {
   async detailByRecruiter(recruiterId: string, id: string) {
     const job = await this.jobsModel.findOne({
       _id: id,
-      recruiterId: recruiterId,
+      recruiterId: new Types.ObjectId(recruiterId),
       deleted: false
     })
-    .populate({ path: 'recruiterId', select: 'fullName email' })
     .populate({ 
       path: 'companyId', 
       select: 'name slug logo size address industries website description foundedYear'
@@ -391,7 +446,7 @@ export class JobsRepository {
   async deleteByRecruiter(recruiterId: string, id: string) {
     const job = await this.jobsModel.findOne({
       _id: id,
-      recruiterId: recruiterId,
+      recruiterId: new Types.ObjectId(recruiterId),
       deleted: false
     });
 
@@ -407,7 +462,7 @@ export class JobsRepository {
     try {
       const job = await this.jobsModel.findOne({
         _id: id,
-        recruiterId: recruiterId,
+        recruiterId: new Types.ObjectId(recruiterId),
         deleted: false
       });
 
@@ -423,8 +478,7 @@ export class JobsRepository {
           isActive: newActiveStatus
         },
         { new: true }
-      ).populate({ path: 'recruiterId', select: 'fullName email' })
-       .populate({ 
+      ).populate({ 
         path: 'companyId', 
         select: 'name slug logo size address industries website description foundedYear'
        })

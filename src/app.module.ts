@@ -19,6 +19,7 @@ import { CompaniesModule } from './modules/companies/companies.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { CvSampleModule } from './modules/cv_sample/cv-sample.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -49,7 +50,8 @@ import { UploadModule } from './modules/upload/upload.module';
     CompaniesModule,
     ApplicationsModule,
     CvSampleModule,
-    UploadModule
+    UploadModule,
+    NotificationsModule
   ],
   controllers: [AppController],
   providers: [AppService],

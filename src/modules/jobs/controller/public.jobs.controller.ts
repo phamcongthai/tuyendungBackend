@@ -73,6 +73,7 @@ export class PublicJobsController {
       const obj = typeof job.toObject === 'function' ? job.toObject() : { ...job };
       // Normalize ObjectIds to strings for stability on FE
       if (obj && obj._id && typeof obj._id !== 'string') obj._id = String(obj._id);
+      if (obj && obj.recruiterId && typeof obj.recruiterId !== 'string') obj.recruiterId = String(obj.recruiterId);
       if (obj && obj.companyId && typeof obj.companyId === 'object' && obj.companyId._id && typeof obj.companyId._id !== 'string') {
         obj.companyId._id = String(obj.companyId._id);
       }
@@ -109,6 +110,7 @@ export class PublicJobsController {
     let processedJob: any = typeof (job as any).toObject === 'function' ? (job as any).toObject() : { ...(job as any) };
     // Normalize ObjectIds to strings
     if (processedJob && processedJob._id && typeof processedJob._id !== 'string') processedJob._id = String(processedJob._id);
+    if (processedJob && processedJob.recruiterId && typeof processedJob.recruiterId !== 'string') processedJob.recruiterId = String(processedJob.recruiterId);
     if (processedJob && processedJob.companyId && typeof processedJob.companyId === 'object' && processedJob.companyId._id && typeof processedJob.companyId._id !== 'string') {
       processedJob.companyId._id = String(processedJob.companyId._id);
     }

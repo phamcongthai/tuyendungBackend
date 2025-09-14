@@ -33,7 +33,14 @@ export class CompaniesRepository {
   // [POST] : /companies (Create new company)
   async create(dto: CreateCompanyDto): Promise<CompanyDocument> {
     const slug = await generateUniqueSlug<CompanyDocument>(this.companyModel as any, dto.name);
-    return this.companyModel.create({ ...dto, slug });
+    const data = { ...dto, slug };
+    
+    // Convert createdBy string to ObjectId if present
+    if (data.createdBy && Types.ObjectId.isValid(data.createdBy)) {
+      data.createdBy = new Types.ObjectId(data.createdBy) as any;
+    }
+    
+    return this.companyModel.create(data);
   }
 
   // [POST] : /companies (Create new company - legacy method for account-based creation)
@@ -171,5 +178,30 @@ export class CompaniesRepository {
     } catch (error) {
       throw new BadRequestException(`Upload failed: ${error.message}`);
     }
+  }
+
+  // Add recruiter to company's recruiters list
+  async addRecruiterToCompany(companyId: string, recruiterId: string): Promise<CompanyDocument | null> {
+    if (!Types.ObjectId.isValid(companyId)) throw new BadRequestException('Invalid company ID');
+    if (!Types.ObjectId.isValid(recruiterId)) throw new BadRequestException('Invalid recruiter ID');
+    
+    return this.companyModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(companyId), deleted: { $ne: true } },
+      { $addToSet: { recruiters: new Types.ObjectId(recruiterId) } },
+      { new: true }
+    );
+  }
+
+  // Get companies by recruiter (created by recruiter or where recruiter is a member)
+  async getByRecruiter(recruiterId: string): Promise<CompanyDocument[]> {
+    if (!Types.ObjectId.isValid(recruiterId)) throw new BadRequestException('Invalid recruiter ID');
+    const recruiterObjectId = new Types.ObjectId(recruiterId);
+    return this.companyModel.find({ 
+      deleted: { $ne: true },
+      $or: [
+        { createdBy: recruiterObjectId },
+        { recruiters: recruiterObjectId }
+      ]
+    }).exec();
   }
 }

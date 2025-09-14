@@ -37,6 +37,12 @@ export class CompaniesController {
     return this.companiesService.getAll();
   }
 
+  //[GET] : /companies/my (Get companies created by current recruiter)
+  @Get('my')
+  async getMyCompanies(@Req() req: any) {
+    return this.companiesService.getMyCompanies(req.user?.id);
+  }
+
   //[POST] : /companies (Create new company)
   @Post()
   async createCompany(@Req() req: any, @Body() dto: CreateCompanyDto) {

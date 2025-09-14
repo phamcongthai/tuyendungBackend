@@ -2,6 +2,7 @@ import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validato
 import { ApiProperty } from '@nestjs/swagger';
 import { Match } from '../../../common/decorators/match.decorator';
 import { PasswordComplexity } from '../../../common/decorators/passwordComplexity.decorator';
+import { Transform } from 'class-transformer';
 export enum Gender {
   MALE = 'male',
   FEMALE = 'female',
@@ -25,6 +26,7 @@ export class RegisterForUserDto {
 
   @ApiProperty()
   @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
   agreement: boolean;
 
 }
@@ -47,6 +49,7 @@ export class RegisterForRecruiterDto {
 
   @ApiProperty()
   @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
   agreement: boolean;
 
   @ApiProperty()

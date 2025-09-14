@@ -5,6 +5,8 @@ import { Job, JobSchema } from '../jobs/jobs.schema';
 import { ApplicationsRepository } from './repositories/applications.repository';
 import { ApplicationsService } from './applications.service';
 import { ApplicationsController } from './controllers/applications.controller';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { JobsModule } from '../jobs/jobs.module';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { ApplicationsController } from './controllers/applications.controller';
       { name: Application.name, schema: ApplicationSchema },
       { name: Job.name, schema: JobSchema },
     ]),
+    JobsModule,
+    NotificationsModule,
   ],
   controllers: [ApplicationsController],
   providers: [ApplicationsService, ApplicationsRepository],

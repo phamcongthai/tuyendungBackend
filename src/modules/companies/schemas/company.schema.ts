@@ -47,6 +47,10 @@ export class Company {
   @Prop({ type: [Types.ObjectId], ref: 'Recruiter', default: [] })
   recruiters: Types.ObjectId[];
 
+  // Người tạo ra company (recruiter)
+  @Prop({ type: Types.ObjectId, ref: 'Recruiter', required: true })
+  createdBy: Types.ObjectId;
+
   // Liên kết Job
   @Prop({ type: [Types.ObjectId], ref: 'Job', default: [] })
   jobs: Types.ObjectId[];

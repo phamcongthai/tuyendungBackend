@@ -43,6 +43,16 @@ export class RecruiterController {
     return this.recruiterService.get(req.user.id);
   }
 
+  //[GET] : /recruiters/profile/ensure
+  @ApiOperation({ summary: 'Ensure recruiter profile exists' })
+  @ApiResponse({ status: 200, description: 'Profile ensured successfully' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('profile/ensure')
+  @Roles('Recruiter')
+  async ensureProfileExists(@Req() req) {
+    return this.recruiterService.ensureProfileExists(req.user.id);
+  }
+
   //[GET] : /recruiters (Admin only)
   @ApiOperation({ summary: 'Get all recruiters - Admin only' })
   @ApiResponse({ status: 200, description: 'Recruiters retrieved successfully' })

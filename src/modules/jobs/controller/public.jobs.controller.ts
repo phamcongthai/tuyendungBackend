@@ -55,7 +55,7 @@ export class PublicJobsController {
     @Query('workingMode') workingMode?: string,
     @Query('jobCategoryId') jobCategoryId?: string,
   ) {
-    const status = 'ACTIVE';
+    const status = 'active';
 
     // Lấy toàn bộ dữ liệu job từ service
     const {data, total} = await this.jobsService.findAll(
@@ -102,7 +102,7 @@ export class PublicJobsController {
   @Get(':slug')
   async detail(@Param('slug') slug: string) {
     const job = await this.jobsService.detailBySlug(slug);
-    if (!job || job.deleted || job.isActive === false) {
+    if (!job || job.deleted || (job as any).status !== 'active') {
       throw new NotFoundException('Job not found');
     }
     

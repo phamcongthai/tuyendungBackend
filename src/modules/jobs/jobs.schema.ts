@@ -11,6 +11,12 @@ export enum JobType {
   FREELANCE = 'freelance',
 }
 
+export enum JobStatus {
+  DRAFT = 'draft',
+  ACTIVE = 'active',
+  EXPIRED = 'expired',
+}
+
 export enum WorkingMode {
   ONSITE = 'onsite',
   REMOTE = 'remote',
@@ -58,8 +64,8 @@ export class Job {
   @Prop({ type: Date })
   deadline?: Date; // Hạn nộp hồ sơ
 
-  @Prop({ default: true })
-  isActive: boolean; // Tin còn hiệu lực
+  @Prop({ type: String, enum: JobStatus, default: JobStatus.DRAFT })
+  status: JobStatus; // Trạng thái tin: draft | active | expired
 
   @Prop({ default: false })
   deleted: boolean; // Đánh dấu xóa mềm

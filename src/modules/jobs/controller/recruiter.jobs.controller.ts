@@ -86,7 +86,7 @@ import { plainToInstance } from 'class-transformer';
     @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
     @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 10)' })
     @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by job title' })
-    @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by job status (active, inactive)' })
+    @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by job status (draft, active, expired)' })
     @ApiQuery({ name: 'jobType', required: false, type: String, description: 'Filter by job type (fulltime, parttime, internship, contract, freelance)' })
     @ApiQuery({ name: 'workingMode', required: false, type: String, description: 'Filter by working mode (onsite, remote, hybrid)' })
     @ApiQuery({ name: 'jobCategoryId', required: false, type: String, description: 'Filter by job category ID' })
@@ -220,7 +220,7 @@ import { plainToInstance } from 'class-transformer';
   
     @ApiOperation({
       summary: 'Toggle job status',
-      description: 'Recruiter toggles job status between ACTIVE and INACTIVE',
+      description: 'Recruiter toggles job status between active and draft',
     })
     @ApiParam({ name: 'id', type: String, description: 'Job ID' })
     @ApiResponse({ status: 200, description: 'Job status updated successfully' })

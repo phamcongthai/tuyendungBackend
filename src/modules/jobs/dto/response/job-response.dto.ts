@@ -1,5 +1,5 @@
 import { Expose, Type } from 'class-transformer';
-import { JobType, WorkingMode } from '../../jobs.schema';
+import { JobType, WorkingMode, JobStatus } from '../../jobs.schema';
 
 export class JobCategoryResponseDto {
   @Expose()
@@ -91,7 +91,7 @@ export class JobResponseDto {
   deadline?: Date;
 
   @Expose()
-  isActive: boolean;
+  status: JobStatus;
 
   @Expose()
   recruiterId: string;
@@ -109,4 +109,8 @@ export class JobResponseDto {
 
   @Expose()
   updatedAt: Date;
+
+  // Number of applications for this job (computed server-side)
+  @Expose()
+  applicationCount?: number;
 }

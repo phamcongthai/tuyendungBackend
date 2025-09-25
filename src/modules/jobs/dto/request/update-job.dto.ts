@@ -9,7 +9,7 @@ import {
   IsMongoId,
 } from 'class-validator';
 import { Types } from 'mongoose';
-import { JobType, WorkingMode } from '../../jobs.schema';
+import { JobType, WorkingMode, JobStatus } from '../../jobs.schema';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateJobDto {
@@ -90,10 +90,10 @@ export class UpdateJobDto {
   @IsDateString()
   deadline?: Date;
 
-  @ApiPropertyOptional({ description: 'Whether job is active' })
+  @ApiPropertyOptional({ description: 'Job status', enum: JobStatus })
   @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
+  @IsEnum(JobStatus)
+  status?: JobStatus;
 
   @ApiPropertyOptional({ description: 'Recruiter ID' })
   @IsOptional()

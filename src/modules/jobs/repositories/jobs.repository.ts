@@ -33,12 +33,11 @@ export class JobsRepository {
       deleted: false,
     };
 
-    // Filter by isActive status if provided
+    // Filter by status if provided (draft | active | expired)
     if (status) {
-      if (status.toLowerCase() === 'active') {
-        query.isActive = true;
-      } else if (status.toLowerCase() === 'inactive') {
-        query.isActive = false;
+      const normalized = status.toLowerCase();
+      if (['draft', 'active', 'expired'].includes(normalized)) {
+        query.status = normalized;
       }
     }
 
@@ -247,12 +246,12 @@ export class JobsRepository {
         throw new BadRequestException('Không tìm thấy công việc');
       }
 
-      const newActiveStatus = !job.isActive;
+      const newStatus = job.status === 'active' ? 'draft' : 'active';
 
       const updatedJob = await this.jobsModel.findByIdAndUpdate(
         id,
         { 
-          isActive: newActiveStatus
+          status: newStatus
         },
         { new: true }
       );
@@ -287,12 +286,11 @@ export class JobsRepository {
       deleted: false,
     };
 
-    // Filter by isActive status if provided
+    // Filter by status if provided (draft | active | expired)
     if (status) {
-      if (status.toLowerCase() === 'active') {
-        query.isActive = true;
-      } else if (status.toLowerCase() === 'inactive') {
-        query.isActive = false;
+      const normalized = status.toLowerCase();
+      if (['draft', 'active', 'expired'].includes(normalized)) {
+        query.status = normalized;
       }
     }
 
@@ -470,12 +468,12 @@ export class JobsRepository {
         throw new BadRequestException('Không tìm thấy công việc hoặc bạn không có quyền chỉnh sửa');
       }
 
-      const newActiveStatus = !job.isActive;
+      const newStatus = job.status === 'active' ? 'draft' : 'active';
 
       const updatedJob = await this.jobsModel.findByIdAndUpdate(
         id,
         { 
-          isActive: newActiveStatus
+          status: newStatus
         },
         { new: true }
       ).populate({ 

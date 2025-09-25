@@ -9,7 +9,7 @@ import {
   IsMongoId,
 } from 'class-validator';
 import { Types } from 'mongoose';
-import { JobType, WorkingMode } from '../../jobs.schema';
+import { JobType, WorkingMode, JobStatus } from '../../jobs.schema';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateJobDto {
@@ -111,12 +111,13 @@ export class CreateJobDto {
   deadline?: Date;
 
   @ApiPropertyOptional({ 
-    description: 'Whether job is active', 
-    example: true 
+    description: 'Job status', 
+    enum: JobStatus,
+    example: JobStatus.DRAFT 
   })
   @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
+  @IsEnum(JobStatus)
+  status?: JobStatus;
 
   @ApiPropertyOptional({ 
     description: 'Recruiter ID who created this job (auto-assigned from JWT token)', 

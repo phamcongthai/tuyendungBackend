@@ -18,7 +18,7 @@ export class Application {
 
   @Prop({
     type: String,
-    enum: ['pending', 'accepted', 'rejected', 'withdrawn'],
+    enum: ['pending', 'viewed', 'shortlisted', 'accepted', 'rejected', 'withdrawn'],
     default: 'pending',
   })
   status: string;  // trạng thái xử lý của recruiter

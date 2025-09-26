@@ -5,9 +5,6 @@ export class UserProfileDto {
   _id: string;
 
   @Expose()
-  username: string;
-
-  @Expose()
   email: string;
 
   @Expose()

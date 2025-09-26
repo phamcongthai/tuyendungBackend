@@ -20,23 +20,33 @@ export class AuthService {
 
     async registerUser(registerDto: RegisterForUserDto) {
         const user = await this.AccountsService.registerForUser(registerDto);
-        const token = crypto.randomBytes(32).toString('hex');
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 1);
 
-        await this.emailVerificationModel.create({
-            accountId: user._id,
-            token,
-            expiresAt,
-        });
-
-        await sendVerificationEmail(user.email, token);
-
-        // Create blank user profile linked with account
+        // Always initialize blank user profile immediately after account creation
         try {
+            console.log('[AuthService] initBlankUser start for account:', String(user._id));
             await this.UsersService.initBlankUser(String(user._id), registerDto.fullName);
+            console.log('[AuthService] initBlankUser success for account:', String(user._id));
         } catch (e) {
-            // non-blocking
+            console.error('[AuthService] initBlankUser failed for account:', String(user._id), e);
+            // non-blocking: do not fail registration if profile init fails
+        }
+
+        // Best-effort email verification creation and sending
+        try {
+            const token = crypto.randomBytes(32).toString('hex');
+            const expiresAt = new Date();
+            expiresAt.setHours(expiresAt.getHours() + 1);
+
+            await this.emailVerificationModel.create({
+                accountId: user._id,
+                token,
+                expiresAt,
+            });
+
+            await sendVerificationEmail(user.email, token);
+        } catch (e) {
+            console.error('[AuthService] email verification setup failed for account:', String(user._id), e);
+            // non-blocking: email setup can be retried later via resend endpoint
         }
 
         return {

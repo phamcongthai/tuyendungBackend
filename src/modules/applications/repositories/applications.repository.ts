@@ -4,7 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Job, JobDocument } from '../../jobs/jobs.schema';
 import { Application, ApplicationDocument } from '../schemas/application.schema';
 
-export type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+export type ApplicationStatus = 'pending' | 'viewed' | 'shortlisted' | 'accepted' | 'rejected' | 'withdrawn';
 
 @Injectable()
 export class ApplicationsRepository {
@@ -92,7 +92,7 @@ export class ApplicationsRepository {
   }
 
   async updateStatus(id: string, status: ApplicationStatus, note?: string): Promise<Application> {
-    if (!['pending', 'accepted', 'rejected', 'withdrawn'].includes(status)) {
+    if (!['pending', 'viewed', 'shortlisted', 'accepted', 'rejected', 'withdrawn'].includes(status)) {
       throw new BadRequestException('Trạng thái không hợp lệ');
     }
     const updated = await this.applicationModel.findByIdAndUpdate(

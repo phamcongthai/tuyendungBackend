@@ -116,14 +116,14 @@ export class ApplicationsController {
     return this.service.findById(id);
   }
 
-  // Cập nhật trạng thái (accepted/rejected/pending/withdrawn)
+  // Cập nhật trạng thái (pending/viewed/shortlisted/accepted/rejected/withdrawn)
   @Patch(':id/status')
   @ApiOperation({ summary: 'Cập nhật trạng thái đơn' })
   @ApiParam({ name: 'id', required: true })
-  @ApiBody({ schema: { properties: { status: { type: 'string', enum: ['pending','accepted','rejected','withdrawn'] }, note: { type: 'string' } } } })
+  @ApiBody({ schema: { properties: { status: { type: 'string', enum: ['pending','viewed','shortlisted','accepted','rejected','withdrawn'] }, note: { type: 'string' } } } })
   updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'; note?: string },
+    @Body() body: { status: 'pending' | 'viewed' | 'shortlisted' | 'accepted' | 'rejected' | 'withdrawn'; note?: string },
   ) {
     return this.service.updateStatus(id, body.status, body.note);
   }

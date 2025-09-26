@@ -7,16 +7,13 @@ import {
   MaxLength,
   IsObject,
   IsMongoId,
+  IsArray,
+  IsDateString,
+  IsEnum,
 } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class UpdateUserDto {
-  @IsOptional()
-  @IsString()
-  @MinLength(3)
-  @MaxLength(50)
-  username?: string;
-
   @IsOptional()
   @IsEmail()
   email?: string;
@@ -57,4 +54,30 @@ export class UpdateUserDto {
   @IsOptional()
   @IsObject()
   cvData?: any;
+
+  // Personal profile fields
+  @IsOptional()
+  @IsDateString()
+  dateOfBirth?: string;
+
+  @IsOptional()
+  @IsEnum(['male', 'female', 'other'])
+  gender?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  desiredPosition?: string;
+
+  @IsOptional()
+  @IsString()
+  summaryExperience?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  skills?: string[];
 }

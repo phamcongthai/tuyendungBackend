@@ -1,12 +1,45 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { RecruiterRepository } from './repositories/recruiters.repository';
 import { CreateRecruiterDto } from './dto/create-recruiter.dto';
 import { UpdateRecruiterDto } from './dto/update-recruiter.dto';
 import { Types } from 'mongoose';
+import { Recruiter, RecruiterDocument } from './schemas/recruiter.schema';
 
 @Injectable()
-export class RecruiterService {
-  constructor(private readonly RecruiterRepository: RecruiterRepository) {}
+export class RecruiterService implements OnModuleInit {
+  constructor(
+    private readonly RecruiterRepository: RecruiterRepository,
+    @InjectModel(Recruiter.name) private readonly recruiterModel: Model<RecruiterDocument>,
+  ) {}
+
+  async onModuleInit() {
+    // Drop legacy unique indexes (username/email) on recruiter collection if any remain
+    try {
+      const indexes = await this.recruiterModel.collection.indexes();
+      const legacyEmail = indexes.find((i: any) => i?.name === 'email_1');
+      if (legacyEmail) {
+        await this.recruiterModel.collection.dropIndex('email_1');
+        // eslint-disable-next-line no-console
+        console.log('[RecruiterService] Dropped legacy index email_1');
+      }
+      for (const idx of indexes) {
+        try {
+          const key = (idx as any)?.key || {};
+          const name = (idx as any)?.name;
+          if ((key && (key.username || key.email)) && name && name !== 'accountId_1') {
+            await this.recruiterModel.collection.dropIndex(name);
+            // eslint-disable-next-line no-console
+            console.log('[RecruiterService] Dropped legacy index', name);
+          }
+        } catch {}
+      }
+    } catch (e: any) {
+      // eslint-disable-next-line no-console
+      console.warn('[RecruiterService] Could not drop legacy recruiter indexes:', e?.message || e);
+    }
+  }
 
   //[GET] : /recruiters/profile 
   async get(accountId: string) {

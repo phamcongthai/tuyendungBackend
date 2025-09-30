@@ -29,8 +29,8 @@ export class NotificationsService {
   }
 
   // Lấy thông báo theo userId
-  async findByUser(userId: string): Promise<Notification[]> {
-    return this.notificationsRepository.findByUser(userId);
+  async findByUser(userId: string, audience?: 'recruiter' | 'client' | 'both'): Promise<Notification[]> {
+    return this.notificationsRepository.findByUser(userId, audience);
   }
 
   // Lấy thông báo theo id

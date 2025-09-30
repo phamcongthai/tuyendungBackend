@@ -26,6 +26,10 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   private onlineRecruiters = new Map<string, string>(); // recruiterId -> socketId
   private socketToRecruiter = new Map<string, string>(); // socketId -> recruiterId
 
+  // Map cho client (ứng viên) online và room của họ
+  private onlineClients = new Map<string, string>(); // clientId -> socketId
+  private socketToClient = new Map<string, string>(); // socketId -> clientId
+
   constructor(private readonly notificationsService: NotificationsService) {}
 
   // Khi client kết nối
@@ -43,6 +47,14 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       this.onlineRecruiters.delete(recruiterId);
       this.socketToRecruiter.delete(client.id);
       console.log(`Recruiter ${recruiterId} went offline`);
+    }
+
+    // Xóa client khỏi danh sách online nếu có
+    const clientUserId = this.socketToClient.get(client.id);
+    if (clientUserId) {
+      this.onlineClients.delete(clientUserId);
+      this.socketToClient.delete(client.id);
+      console.log(`Client user ${clientUserId} went offline`);
     }
   }
 
@@ -80,6 +92,100 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     return { event: 'joinedRoom', room: userId };
   }
 
+  // Client (ứng viên) join room riêng
+  @SubscribeMessage('clientJoin')
+  handleClientJoin(
+    @MessageBody() data: { clientId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { clientId } = data;
+
+    // Lưu thông tin client online
+    this.onlineClients.set(clientId, client.id);
+    this.socketToClient.set(client.id, clientId);
+
+    // Join vào room của client
+    client.join(clientId);
+
+    console.log(`Client user ${clientId} joined room and is now online`);
+    return { event: 'clientJoined', clientId, online: true };
+  }
+
+  // Ứng viên cập nhật trạng thái hồ sơ -> emit cho recruiter
+  @SubscribeMessage('clientApplicationStatusChanged')
+  async handleClientApplicationStatusChanged(
+    @MessageBody() data: {
+      recruiterId: string; // recruiter nhận thông báo
+      applicationId: string;
+      jobId: string;
+      applicantId: string;
+      applicantName?: string;
+      jobTitle?: string;
+      status:
+        | 'APPLICATION_VIEWED'
+        | 'APPLICATION_PASSED'
+        | 'APPLICATION_REJECTED'
+        | 'INTERVIEW_INVITED'
+        | 'INTERVIEW_RESULT'
+        | 'OFFER_SENT'
+        | 'OFFER_RESPONSE'
+        | 'HIRED';
+      message?: string;
+      metadata?: any;
+    },
+  ) {
+    const {
+      recruiterId,
+      applicationId,
+      jobId,
+      applicantId,
+      applicantName,
+      jobTitle,
+      status,
+      message,
+      metadata,
+    } = data;
+
+    // Map status string sang enum NotificationType
+    const statusToType: Record<string, NotificationType> = {
+      APPLICATION_VIEWED: NotificationType.APPLICATION_VIEWED,
+      APPLICATION_PASSED: NotificationType.APPLICATION_PASSED,
+      APPLICATION_REJECTED: NotificationType.APPLICATION_REJECTED,
+      INTERVIEW_INVITED: NotificationType.INTERVIEW_INVITED,
+      INTERVIEW_RESULT: NotificationType.INTERVIEW_RESULT,
+      OFFER_SENT: NotificationType.OFFER_SENT,
+      OFFER_RESPONSE: NotificationType.OFFER_RESPONSE,
+      HIRED: NotificationType.HIRED,
+    };
+
+    const type = statusToType[status] ?? NotificationType.OTHER;
+
+    const notificationData = {
+      userId: recruiterId,
+      message:
+        message ||
+        `Ứng viên ${applicantName || 'N/A'} cập nhật trạng thái: ${status.replaceAll('_', ' ')}`,
+      type,
+      applicationId,
+      jobId,
+      applicantId,
+      metadata: {
+        ...(metadata || {}),
+        jobTitle,
+        applicantName,
+        status,
+      },
+    } as any;
+
+    // Lưu vào DB
+    const saved = await this.notificationsService.create(notificationData);
+
+    // Emit realtime tới recruiter room
+    this.server.to(recruiterId).emit('newNotification', saved);
+
+    return saved;
+  }
+
   // Khi có thông báo mới
   @SubscribeMessage('createNotification')
   async handleCreateNotification(
@@ -95,6 +201,11 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   // Kiểm tra recruiter có online không
   isRecruiterOnline(recruiterId: string): boolean {
     return this.onlineRecruiters.has(recruiterId);
+  }
+
+  // Kiểm tra client có online không
+  isClientOnline(clientId: string): boolean {
+    return this.onlineClients.has(clientId);
   }
 
   // Gửi số notification chưa đọc cho recruiter
@@ -120,10 +231,10 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     try {
       console.log(`📤 Sending application notification to recruiter ${recruiterId}`);
       
-      const notificationData = {
+      const notificationData: CreateNotificationDto = {
         userId: recruiterId,
         message: `Có đơn ứng tuyển mới cho vị trí "${jobTitle}" từ ${applicantName}`,
-        type: NotificationType.APPLICATION_SUBMITTED,
+        type: NotificationType.NEW_APPLICATION,
         applicationId,
         jobId,
         applicantId,
@@ -131,7 +242,8 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
           jobTitle,
           applicantName,
           applicationId
-        }
+        },
+        audience: 'recruiter'
       };
 
       // Lưu notification vào database
@@ -188,6 +300,145 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       return savedNotification;
     } catch (error) {
       console.error(`❌ Error in sendNotificationToUser:`, error);
+      throw error;
+    }
+  }
+
+  // Gửi thông báo cho ứng viên khi NTD đã xem hồ sơ
+  async sendApplicationViewedToClient(
+    clientUserId: string,
+    applicationId: string,
+    jobId: string,
+    jobTitle: string
+  ) {
+    try {
+      const notificationData: CreateNotificationDto = {
+        userId: clientUserId,
+        message: `Nhà tuyển dụng đã xem hồ sơ của bạn cho vị trí "${jobTitle}"`,
+        type: NotificationType.APPLICATION_VIEWED,
+        applicationId,
+        jobId,
+        metadata: {
+          jobTitle,
+          applicationId
+        },
+        audience: 'client'
+      };
+
+      const savedNotification = await this.notificationsService.create(notificationData);
+
+      if (this.isClientOnline(clientUserId)) {
+        this.server.to(clientUserId).emit('newNotification', savedNotification);
+        console.log(`📡 Realtime notification sent to online client ${clientUserId}`);
+      } else {
+        console.log(`📝 Notification saved for offline client ${clientUserId}`);
+      }
+
+      return savedNotification;
+    } catch (error) {
+      console.error(`❌ Error sending application viewed notification to client:`, error);
+      throw error;
+    }
+  }
+
+  // Gửi thông báo cho ứng viên khi NTD mời phỏng vấn
+  async sendInterviewInvitedToClient(
+    clientUserId: string,
+    applicationId: string,
+    jobId: string,
+    jobTitle: string,
+    whenText: string,
+    whereText: string,
+  ) {
+    try {
+      const notificationData: CreateNotificationDto = {
+        userId: clientUserId,
+        message: `Bạn được mời phỏng vấn cho vị trí "${jobTitle}" vào lúc ${whenText} tại ${whereText}`,
+        type: NotificationType.INTERVIEW_INVITED,
+        applicationId,
+        jobId,
+        metadata: {
+          jobTitle,
+          applicationId,
+          interviewDate: whenText,
+          interviewLocation: whereText,
+        },
+        audience: 'client'
+      };
+
+      const savedNotification = await this.notificationsService.create(notificationData);
+
+      if (this.isClientOnline(clientUserId)) {
+        this.server.to(clientUserId).emit('newNotification', savedNotification);
+        console.log(`📡 Realtime INTERVIEW_INVITED sent to online client ${clientUserId}`);
+      } else {
+        console.log(`📝 INTERVIEW_INVITED saved for offline client ${clientUserId}`);
+      }
+
+      return savedNotification;
+    } catch (error) {
+      console.error(`❌ Error sending interview invited notification to client:`, error);
+      throw error;
+    }
+  }
+
+  // Gửi thông báo shortlist cho ứng viên
+  async sendApplicationShortlistedToClient(
+    clientUserId: string,
+    applicationId: string,
+    jobId: string,
+    jobTitle: string,
+  ) {
+    try {
+      const notificationData: CreateNotificationDto = {
+        userId: clientUserId,
+        message: `Hồ sơ của bạn đã được đưa vào shortlist cho vị trí "${jobTitle}"`,
+        type: NotificationType.APPLICATION_PASSED,
+        applicationId,
+        jobId,
+        metadata: { jobTitle, applicationId },
+        audience: 'client'
+      };
+
+      const savedNotification = await this.notificationsService.create(notificationData);
+
+      if (this.isClientOnline(clientUserId)) {
+        this.server.to(clientUserId).emit('newNotification', savedNotification);
+        console.log(`📡 Realtime APPLICATION_PASSED sent to online client ${clientUserId}`);
+      }
+      return savedNotification;
+    } catch (error) {
+      console.error('❌ Error sending shortlist notification:', error);
+      throw error;
+    }
+  }
+
+  // Gửi thông báo từ chối cho ứng viên
+  async sendApplicationRejectedToClient(
+    clientUserId: string,
+    applicationId: string,
+    jobId: string,
+    jobTitle: string,
+  ) {
+    try {
+      const notificationData: CreateNotificationDto = {
+        userId: clientUserId,
+        message: `Rất tiếc, hồ sơ của bạn đã bị từ chối cho vị trí "${jobTitle}"`,
+        type: NotificationType.APPLICATION_REJECTED,
+        applicationId,
+        jobId,
+        metadata: { jobTitle, applicationId },
+        audience: 'client'
+      };
+
+      const savedNotification = await this.notificationsService.create(notificationData);
+      if (this.isClientOnline(clientUserId)) {
+        this.server.to(clientUserId).emit('newNotification', savedNotification);
+        console.log(`📡 Realtime APPLICATION_REJECTED sent to online client ${clientUserId}`);
+      }
+      return savedNotification;
+    } catch (error) {
+      console.error('❌ Error sending rejection notification:', error);
       throw error;
     }
   }

@@ -37,4 +37,39 @@ export class UploadService {
       throw new BadRequestException(`Upload failed: ${error.message}`);
     }
   }
+
+  async uploadSiteAsset(file: Express.Multer.File): Promise<{
+    url: string;
+    secure_url: string;
+    public_id: string;
+  }> {
+    try {
+      const uploadResult = await new Promise<any>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: 'site-assets',
+            resource_type: 'image',
+            use_filename: true,
+            unique_filename: true,
+            overwrite: true,
+            transformation: [
+              { quality: 'auto', fetch_format: 'auto' }
+            ]
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          },
+        );
+        streamifier.createReadStream(file.buffer).pipe(uploadStream);
+      });
+      return {
+        url: uploadResult.secure_url,
+        secure_url: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+      };
+    } catch (error) {
+      throw new BadRequestException(`Upload failed: ${error.message}`);
+    }
+  }
 }

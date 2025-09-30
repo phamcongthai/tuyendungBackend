@@ -5,12 +5,25 @@ import { Document, Types } from 'mongoose';
 export type NotificationDocument = Notification & Document;
 
 export enum NotificationType {
-  APPLICATION_SUBMITTED = 'application_submitted',
-  APPLICATION_ACCEPTED = 'application_accepted',
-  APPLICATION_REJECTED = 'application_rejected',
-  SYSTEM = 'system',
-  MESSAGE = 'message',
-  OTHER = 'other',
+  // Ứng viên → Nhà tuyển dụng
+  NEW_APPLICATION = 'NEW_APPLICATION',
+
+  // Nhà tuyển dụng → Ứng viên
+  APPLICATION_VIEWED = 'APPLICATION_VIEWED',
+  APPLICATION_PASSED = 'APPLICATION_PASSED',
+  APPLICATION_REJECTED = 'APPLICATION_REJECTED',
+
+  INTERVIEW_INVITED = 'INTERVIEW_INVITED',
+  INTERVIEW_RESULT = 'INTERVIEW_RESULT',
+
+  OFFER_SENT = 'OFFER_SENT',
+  OFFER_RESPONSE = 'OFFER_RESPONSE',
+
+  HIRED = 'HIRED',
+
+  SYSTEM = 'SYSTEM',
+  MESSAGE = 'MESSAGE',
+  OTHER = 'OTHER',
 }
 
 @Schema({ timestamps: true, collection: 'notifications' })
@@ -46,6 +59,10 @@ export class Notification {
   // Thông tin bổ sung
   @Prop({ type: Object })
   metadata?: any; // Dữ liệu bổ sung (tên job, tên ứng viên, etc.)
+
+  // Phân nhóm đối tượng nhận: recruiter | client | both
+  @Prop({ type: String, enum: ['recruiter', 'client', 'both'], default: 'both' })
+  audience?: 'recruiter' | 'client' | 'both';
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);

@@ -28,9 +28,12 @@ export class NotificationsController {
 
   // Lấy tất cả thông báo (hoặc theo userId nếu có query)
   @Get()
-  async findAll(@Query('userId') userId?: string) {
+  async findAll(
+    @Query('userId') userId?: string,
+    @Query('audience') audience?: 'recruiter' | 'client' | 'both',
+  ) {
     if (userId) {
-      return this.notificationsService.findByUser(userId);
+      return this.notificationsService.findByUser(userId, audience);
     }
     return this.notificationsService.findAll();
   }

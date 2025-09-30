@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, IsObject, IsIn } from 'class-validator';
 import { NotificationType } from '../notifications.schema';
 
 export class CreateNotificationDto {
@@ -29,4 +29,8 @@ export class CreateNotificationDto {
   @IsOptional()
   @IsObject()
   readonly metadata?: any;
+
+  @IsOptional()
+  @IsIn(['recruiter', 'client', 'both'])
+  readonly audience?: 'recruiter' | 'client' | 'both';
 }

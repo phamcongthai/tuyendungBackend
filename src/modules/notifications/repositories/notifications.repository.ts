@@ -23,6 +23,7 @@ export class NotificationsRepository {
         applicationId: createDto.applicationId ? new Types.ObjectId(createDto.applicationId) : undefined,
         jobId: createDto.jobId ? new Types.ObjectId(createDto.jobId) : undefined,
         applicantId: createDto.applicantId ? new Types.ObjectId(createDto.applicantId) : undefined,
+        audience: createDto.audience || 'both',
       };
       
       console.log('📄 Creating notification data:', notificationData);
@@ -41,8 +42,12 @@ export class NotificationsRepository {
     return this.notificationModel.find().exec();
   }
 
-  async findByUser(userId: string): Promise<Notification[]> {
-    return this.notificationModel.find({ userId: new Types.ObjectId(userId) }).exec();
+  async findByUser(userId: string, audience?: 'recruiter' | 'client' | 'both'): Promise<Notification[]> {
+    const query: any = { userId: new Types.ObjectId(userId) };
+    if (audience && audience !== 'both') {
+      query.audience = { $in: [audience, 'both'] };
+    }
+    return this.notificationModel.find(query).sort({ createdAt: -1 }).exec();
   }
 
   async findById(id: string): Promise<Notification | null> {

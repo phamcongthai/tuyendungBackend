@@ -40,7 +40,7 @@ export class ApplicationsService {
           'unknown', // Fallback recruiterId
           {
             message: `Có ứng viên mới ứng tuyển cho công việc (Job ID: ${jobId})`,
-            type: 'application_submitted'
+            type: 'NEW_APPLICATION'
           }
         );
         console.log('✅ Đã gửi thông báo fallback');
@@ -89,7 +89,7 @@ export class ApplicationsService {
           'unknown',
           {
             message: `Có ứng viên mới ứng tuyển cho công việc "${job.title || 'Unknown Job'}"`,
-            type: 'application_submitted'
+            type: 'NEW_APPLICATION'
           }
         );
         
@@ -107,7 +107,7 @@ export class ApplicationsService {
           'unknown',
           {
             message: `Có ứng viên mới ứng tuyển cho công việc (Job ID: ${jobId})`,
-            type: 'application_submitted'
+            type: 'NEW_APPLICATION'
           }
         );
         console.log('✅ Đã gửi thông báo fallback sau lỗi');
@@ -147,12 +147,105 @@ export class ApplicationsService {
     return this.repo.findAllByJob(jobId, page, limit);
   }
 
-  updateStatus(id: string, status: ApplicationStatus, note?: string) {
-    return this.repo.updateStatus(id, status, note);
+  async updateStatus(id: string, status: ApplicationStatus, note?: string) {
+    const updated = await this.repo.updateStatus(id, status, note);
+
+    // Nếu recruiter đổi trạng thái sang viewed -> gửi thông báo cho ứng viên
+    if (updated) {
+      try {
+        // Refetch để đảm bảo có đủ dữ liệu (đặc biệt là jobId và accountId)
+        const full = await this.repo.findById(id);
+        const jobId = (full?.jobId as any)?._id ? String((full as any).jobId._id) : ((full?.jobId as any)?.toString?.() || String(full?.jobId));
+        const accountId = (full?.accountId as any)?._id ? String((full as any).accountId._id) : ((full?.accountId as any)?.toString?.() || String(full?.accountId));
+        // Map accountId -> client user id via populated userProfile
+        // Dùng accountId để bám theo luồng "đã xem" (client join theo user.id = accountId)
+        const targetUserId = accountId;
+
+        // Lấy job title thân thiện
+        const job = jobId ? await this.jobsService.detail(jobId) : null;
+        const jobTitle = (job && (job as any).title) ? (job as any).title : 'công việc';
+
+        if (status === 'viewed') {
+          await this.notificationsGateway.sendApplicationViewedToClient(
+            targetUserId,
+            id,
+            jobId,
+            jobTitle
+          );
+        }
+
+        if (status === 'shortlisted') {
+          await this.notificationsGateway.sendApplicationShortlistedToClient(
+            targetUserId,
+            id,
+            jobId,
+            jobTitle,
+          );
+        }
+
+        if (status === 'rejected') {
+          await this.notificationsGateway.sendApplicationRejectedToClient(
+            targetUserId,
+            id,
+            jobId,
+            jobTitle,
+          );
+        }
+      } catch (error) {
+        console.error('❌ Error emitting status notification to client:', error);
+      }
+    }
+
+    return updated;
   }
 
   withdrawByUser(accountId: string, id: string) {
     return this.repo.withdrawByUser(accountId, id);
+  }
+
+  async setInterested(id: string, interested: boolean) {
+    return this.repo.updateInterested(id, interested);
+  }
+
+  async updateInterview(
+    id: string,
+    data: { interviewDate?: string | null; interviewLocation?: string | null; interviewNote?: string | null }
+  ) {
+    const payload: any = {};
+    if (data.interviewDate !== undefined) {
+      payload.interviewDate = data.interviewDate ? new Date(data.interviewDate) : null;
+    }
+    if (data.interviewLocation !== undefined) payload.interviewLocation = data.interviewLocation;
+    if (data.interviewNote !== undefined) payload.interviewNote = data.interviewNote;
+
+    const updated = await this.repo.updateInterviewInfo(id, payload);
+
+    try {
+      const full = await this.repo.findById(id);
+      const jobId = (full?.jobId as any)?._id ? String((full as any).jobId._id) : ((full?.jobId as any)?.toString?.() || String(full?.jobId));
+      const accountId = (full?.accountId as any)?._id ? String((full as any).accountId._id) : ((full?.accountId as any)?.toString?.() || String(full?.accountId));
+      // Dùng accountId để bám theo luồng "đã xem" (client join theo user.id = accountId)
+      const targetUserId = accountId;
+      const job = jobId ? await this.jobsService.detail(jobId) : null;
+      const jobTitle = (job && (job as any).title) ? (job as any).title : 'công việc';
+
+      const when = updated?.['interviewDate'] ? new Date(updated['interviewDate']).toLocaleString('vi-VN') : 'thời gian sẽ cập nhật sau';
+      const where = updated?.['interviewLocation'] || 'địa điểm sẽ cập nhật sau';
+
+      await this.notificationsGateway.sendInterviewInvitedToClient(
+        targetUserId,
+        id,
+        jobId,
+        jobTitle,
+        when,
+        where
+      );
+    } catch (error) {
+      // log only
+      console.error('❌ Error sending interview invitation notification:', error);
+    }
+
+    return updated;
   }
 }
 

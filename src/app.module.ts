@@ -20,6 +20,8 @@ import { ApplicationsModule } from './modules/applications/applications.module';
 import { CvSampleModule } from './modules/cv_sample/cv-sample.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SiteSettingsModule } from './modules/site-settings/site-settings.module';
+import { BlogsModule } from './modules/blogs/blogs.module';
 
 @Module({
   imports: [
@@ -51,7 +53,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     ApplicationsModule,
     CvSampleModule,
     UploadModule,
-    NotificationsModule
+    NotificationsModule,
+    SiteSettingsModule,
+    BlogsModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -18,7 +18,7 @@ export class Application {
 
   @Prop({
     type: String,
-    enum: ['pending', 'viewed', 'shortlisted', 'accepted', 'rejected', 'withdrawn'],
+    enum: ['pending', 'viewed', 'shortlisted', 'accepted', 'rejected', 'withdrawn', 'interviewed', 'interview_failed'],
     default: 'pending',
   })
   status: string;  // trạng thái xử lý của recruiter
@@ -28,6 +28,20 @@ export class Application {
 
   @Prop({ default: null })
   coverLetter?: string;   // thư xin việc của ứng viên
+
+  // Quan tâm (tách riêng khỏi status)
+  @Prop({ type: Boolean, default: false })
+  interested?: boolean;
+
+  // Thông tin phỏng vấn
+  @Prop({ type: Date, default: null })
+  interviewDate?: Date | null;
+
+  @Prop({ type: String, default: null })
+  interviewLocation?: string | null;
+
+  @Prop({ type: String, default: null })
+  interviewNote?: string | null;
 
 }
 

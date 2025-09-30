@@ -116,16 +116,40 @@ export class ApplicationsController {
     return this.service.findById(id);
   }
 
-  // Cập nhật trạng thái (pending/viewed/shortlisted/accepted/rejected/withdrawn)
+  // Cập nhật trạng thái (pending/viewed/shortlisted/accepted/rejected/withdrawn/interviewed/interview_failed)
   @Patch(':id/status')
   @ApiOperation({ summary: 'Cập nhật trạng thái đơn' })
   @ApiParam({ name: 'id', required: true })
-  @ApiBody({ schema: { properties: { status: { type: 'string', enum: ['pending','viewed','shortlisted','accepted','rejected','withdrawn'] }, note: { type: 'string' } } } })
+  @ApiBody({ schema: { properties: { status: { type: 'string', enum: ['pending','viewed','shortlisted','accepted','rejected','withdrawn','interviewed','interview_failed'] }, note: { type: 'string' } } } })
   updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: 'pending' | 'viewed' | 'shortlisted' | 'accepted' | 'rejected' | 'withdrawn'; note?: string },
+    @Body() body: { status: 'pending' | 'viewed' | 'shortlisted' | 'accepted' | 'rejected' | 'withdrawn' | 'interviewed' | 'interview_failed'; note?: string },
   ) {
     return this.service.updateStatus(id, body.status, body.note);
+  }
+
+  // Toggle quan tâm (interested)
+  @Patch(':id/interested')
+  @ApiOperation({ summary: 'Cập nhật cờ quan tâm (tách riêng khỏi status)' })
+  @ApiParam({ name: 'id', required: true })
+  @ApiBody({ schema: { properties: { interested: { type: 'boolean' } } } })
+  updateInterested(
+    @Param('id') id: string,
+    @Body() body: { interested: boolean },
+  ) {
+    return this.service.setInterested(id, Boolean(body.interested));
+  }
+
+  // Cập nhật thông tin phỏng vấn + thông báo cho ứng viên
+  @Patch(':id/interview')
+  @ApiOperation({ summary: 'Cập nhật thông tin phỏng vấn và gửi thông báo cho ứng viên' })
+  @ApiParam({ name: 'id', required: true })
+  @ApiBody({ schema: { properties: { interviewDate: { type: 'string', format: 'date-time' }, interviewLocation: { type: 'string' }, interviewNote: { type: 'string' } } } })
+  updateInterview(
+    @Param('id') id: string,
+    @Body() body: { interviewDate?: string | null; interviewLocation?: string | null; interviewNote?: string | null },
+  ) {
+    return this.service.updateInterview(id, body);
   }
 
   // Ứng viên tự hủy đơn của mình

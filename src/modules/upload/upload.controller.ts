@@ -63,4 +63,27 @@ export class UploadController {
 
     return this.uploadService.uploadImage(file);
   }
+
+  // New endpoint for site assets (logo, favicon) - allow svg and ico
+  @Post('site-asset')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload site asset (logo/favicon) to Cloudinary' })
+  @ApiResponse({ status: 201, description: 'Uploaded successfully' })
+  async uploadSiteAsset(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          // Accept common favicon/logo mime types
+          new FileTypeValidator({ fileType: /(image\/(png|jpg|jpeg|gif|webp|svg\+xml|x-icon|vnd\.microsoft\.icon))$/ }),
+        ],
+      }),
+    ) file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    return this.uploadService.uploadSiteAsset(file);
+  }
 }

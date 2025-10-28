@@ -80,4 +80,8 @@ export class UpdateUserDto {
   @IsArray()
   @IsString({ each: true })
   skills?: string[];
+
+  @IsOptional()
+  @IsString()
+  cvPdfUrl?: string;
 }

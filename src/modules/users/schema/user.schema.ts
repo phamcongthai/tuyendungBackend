@@ -43,6 +43,9 @@ export class User {
   // CV fields data (simple key-value pairs for template fields)
   @Prop({ type: Object, default: {} })
   cvFields: Record<string, string>;
+
+  @Prop({ default: null })
+  cvPdfUrl: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

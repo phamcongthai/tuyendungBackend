@@ -106,8 +106,12 @@ export class AccountsService {
 
   const hashed = await bcrypt.hash(registerUserDto.password, 10);
 
-  const userRole = await this.rolesRepo.findByName('User') as { _id: string } | null;
-  if (!userRole) throw new BadRequestException('Role mặc định chưa tồn tại');
+  let userRole = await this.rolesRepo.findByName('User') as { _id: string } | null;
+  // Auto-create default 'User' role if missing
+  if (!userRole) {
+    const created = await this.rolesRepo.create({ name: 'User', permissions: [] } as any);
+    userRole = created as any;
+  }
 
   // Gán password đã hash
   const account = await this.accountsRepo.registerUser({
@@ -131,8 +135,12 @@ export class AccountsService {
 
   const hashed = await bcrypt.hash(registerRecruiterDto.password, 10);
 
-  const userRole = await this.rolesRepo.findByName('Recruiter') as { _id: string } | null;
-  if (!userRole) throw new BadRequestException('Role mặc định chưa tồn tại');
+  let userRole = await this.rolesRepo.findByName('Recruiter') as { _id: string } | null;
+  // Auto-create default 'Recruiter' role if missing
+  if (!userRole) {
+    const created = await this.rolesRepo.create({ name: 'Recruiter', permissions: [] } as any);
+    userRole = created as any;
+  }
 
   // Gán password đã hash
   const account = await this.accountsRepo.registerRecruiter({

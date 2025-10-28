@@ -55,7 +55,7 @@ export class UsersRepository {
 	async updateByAccountId(accountId: string, payload: any) {
 		const allowed = [
 			'avatar','dateOfBirth','gender','city',
-			'desiredPosition','summaryExperience','skills','cvData','cvId','cvFields'
+			'desiredPosition','summaryExperience','skills','cvData','cvId','cvFields','cvPdfUrl'
 		];
 		const update: any = {};
 		for (const key of allowed) {

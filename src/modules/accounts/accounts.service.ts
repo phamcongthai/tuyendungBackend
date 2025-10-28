@@ -121,7 +121,7 @@ export class AccountsService {
 
   await this.accountRolesRepo.create({
     accountId: new Types.ObjectId(account._id as string),
-    roleId: new Types.ObjectId(userRole._id as string),
+    roleId: new Types.ObjectId((userRole as any)._id as string),
   });
 
   return account;
@@ -150,7 +150,7 @@ export class AccountsService {
 
   await this.accountRolesRepo.create({
     accountId: new Types.ObjectId(account._id as string),
-    roleId: new Types.ObjectId(userRole._id as string),
+    roleId: new Types.ObjectId((userRole as any)._id as string),
   });
 
   // Tạo hồ sơ Recruiter rỗng ngay sau khi tạo account

@@ -94,6 +94,13 @@ export class CreateJobDto {
   salaryMax?: number;
 
   @ApiPropertyOptional({ 
+    description: 'Is salary negotiable (true for Thỏa thuận)'
+  })
+  @IsOptional()
+  @IsBoolean()
+  isSalaryNegotiable?: boolean;
+
+  @ApiPropertyOptional({ 
     description: 'Currency (VND or USD)', 
     example: 'VND',
     enum: ['VND', 'USD']
@@ -101,6 +108,26 @@ export class CreateJobDto {
   @IsOptional()
   @IsString()
   currency?: string;
+
+  @ApiPropertyOptional({ description: 'Headcount (number of hires)', example: 1 })
+  @IsOptional()
+  @IsNumber()
+  headcount?: number;
+
+  @ApiPropertyOptional({ description: 'Seniority level (Vietnamese)', example: 'Nhân viên' })
+  @IsOptional()
+  @IsString()
+  levelVi?: string;
+
+  @ApiPropertyOptional({ description: 'Seniority level (English)', example: 'Junior' })
+  @IsOptional()
+  @IsString()
+  levelEn?: string;
+
+  @ApiPropertyOptional({ description: 'Education requirement (VN)', example: 'Đại học' })
+  @IsOptional()
+  @IsString()
+  education?: string;
 
   @ApiPropertyOptional({ 
     description: 'Application deadline', 

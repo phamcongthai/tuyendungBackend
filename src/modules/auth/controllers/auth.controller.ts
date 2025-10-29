@@ -115,7 +115,7 @@ export class AuthController {
         // 👉 Cookie cho Web (browser sẽ tự gửi kèm khi gọi API)
         // Để hỗ trợ cross-site XHR (FE và BE khác origin), cần SameSite=None và Secure
         // Lưu ý: Trình duyệt hiện đại chấp nhận Secure trên localhost
-        res.cookie('token', token, {
+        res.cookie('tokenRecruiter', token, {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
@@ -146,7 +146,7 @@ export class AuthController {
     @Post('logout')
     async logout(@Res({ passthrough: true }) res: Response) {
         const isProd = process.env.NODE_ENV === 'production';
-        res.cookie('token', '', {
+        res.cookie('tokenRecruiter', '', {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
@@ -188,7 +188,7 @@ export class AuthController {
             token = authHeader.slice(7);
         }
         if (!token) {
-            token = req?.cookies?.['token'] || null;
+            token = req?.cookies?.['tokenRecruiter'] || null;
         }
 
         if (!token) {

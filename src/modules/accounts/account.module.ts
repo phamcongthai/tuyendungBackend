@@ -8,6 +8,7 @@ import { AccountsController } from './controllers/accounts.controller';
 import { AccountsRepository } from './repositories/accounts.repository';
 import { AccountRolesModule } from '../account_roles/account_roles.module';
 import { RolesModule } from '../roles/roles.module';
+import { AdminAccountSeeder } from '../../seeders/admin-account.seeder';
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -22,7 +23,7 @@ import { RolesModule } from '../roles/roles.module';
     }),
   ],
   controllers: [AccountsController],
-  providers: [AccountsService, AccountsRepository],
+  providers: [AccountsService, AccountsRepository, AdminAccountSeeder],
   exports: [AccountsService, AccountsRepository],
 })
 export class AccountsModule {}

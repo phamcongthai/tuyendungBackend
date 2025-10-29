@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { JobCategoriesSeeder } from './job-categories.seeder';
+import { AdminAccountSeeder } from './admin-account.seeder';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -8,6 +9,10 @@ async function bootstrap() {
   try {
     console.log('Starting seeders...');
     
+    // Seed default admin account first
+    const adminSeeder = app.get(AdminAccountSeeder);
+    await adminSeeder.seed();
+
     // Run job categories seeder
     const jobCategoriesSeeder = app.get(JobCategoriesSeeder);
     await jobCategoriesSeeder.seed();

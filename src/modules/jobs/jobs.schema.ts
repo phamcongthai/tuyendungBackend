@@ -58,8 +58,27 @@ export class Job {
   @Prop({ type: Number })
   salaryMax?: number; // Mức lương tối đa
 
+  // Lương thỏa thuận
+  @Prop({ type: Boolean, default: false })
+  isSalaryNegotiable?: boolean;
+
   @Prop({ type: String, enum: ['VND', 'USD'], default: 'VND' })
   currency: string; // Đơn vị tiền tệ
+
+  // Số lượng cần tuyển
+  @Prop({ type: Number, default: 1 })
+  headcount?: number;
+
+  // Cấp bậc (vi & en)
+  @Prop({ type: String, default: '' })
+  levelVi?: string;
+
+  @Prop({ type: String, default: '' })
+  levelEn?: string;
+
+  // Học vấn
+  @Prop({ type: String, default: '' })
+  education?: string;
 
   @Prop({ type: Date })
   deadline?: Date; // Hạn nộp hồ sơ

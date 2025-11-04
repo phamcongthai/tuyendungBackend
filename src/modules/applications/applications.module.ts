@@ -19,6 +19,7 @@ import { JobsModule } from '../jobs/jobs.module';
   ],
   controllers: [ApplicationsController],
   providers: [ApplicationsService, ApplicationsRepository],
+  exports: [ApplicationsService, ApplicationsRepository],
 })
 export class ApplicationsModule {}
 

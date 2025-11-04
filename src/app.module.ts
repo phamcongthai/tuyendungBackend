@@ -22,6 +22,7 @@ import { UploadModule } from './modules/upload/upload.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SiteSettingsModule } from './modules/site-settings/site-settings.module';
 import { BlogsModule } from './modules/blogs/blogs.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -55,7 +56,8 @@ import { BlogsModule } from './modules/blogs/blogs.module';
     UploadModule,
     NotificationsModule,
     SiteSettingsModule,
-    BlogsModule
+    BlogsModule,
+    AiModule
   ],
   controllers: [AppController],
   providers: [AppService],

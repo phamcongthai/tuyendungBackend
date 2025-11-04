@@ -55,7 +55,7 @@ export class ApplicationsRepository {
   async findById(id: string) {
     return await this.applicationModel
       .findById(id)
-      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields' })
+      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields cvPdfUrl' })
       .populate({ path: 'account', select: 'fullName email phone' })
       .populate({ path: 'jobId', select: '_id title slug' });
   }
@@ -66,7 +66,7 @@ export class ApplicationsRepository {
     const data = await this.applicationModel
       .find(query)
       .populate({ path: 'jobId', select: '_id title slug' })
-      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields' })
+      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields cvPdfUrl' })
       .populate({ path: 'account', select: 'fullName email phone' })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -80,7 +80,7 @@ export class ApplicationsRepository {
     const query = { jobId: new Types.ObjectId(jobId) } as any;
     const data = await this.applicationModel
       .find(query)
-      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields' })
+      .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields cvPdfUrl' })
       .populate({ path: 'account', select: 'fullName email phone' })
       .populate({ path: 'jobId', select: '_id title slug' })
       .sort({ createdAt: -1 })

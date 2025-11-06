@@ -1,4 +1,4 @@
-import { Expose, Type } from 'class-transformer';
+import { Expose, Type, Transform } from 'class-transformer';
 import { JobType, WorkingMode, JobStatus } from '../../jobs.schema';
 
 export class JobCategoryResponseDto {
@@ -78,11 +78,19 @@ export class JobResponseDto {
   @Expose()
   location?: string;
 
+  // Career (category title) derived from populated jobCategoryId
+  @Expose()
+  @Transform(({ obj }) => (obj?.jobCategoryId?.title || obj?.jobCategory?.title || undefined))
+  career?: string;
+
   @Expose()
   salaryMin?: number;
 
   @Expose()
   salaryMax?: number;
+
+  @Expose()
+  isSalaryNegotiable?: boolean;
 
   @Expose()
   currency: string;
@@ -100,7 +108,8 @@ export class JobResponseDto {
   @Type(() => CompanyResponseDto)
   companyId: string | CompanyResponseDto;
 
-  @Expose()
+  // Map the populated jobCategoryId to jobCategory in response
+  @Expose({ name: 'jobCategoryId' })
   @Type(() => JobCategoryResponseDto)
   jobCategory?: JobCategoryResponseDto;
 

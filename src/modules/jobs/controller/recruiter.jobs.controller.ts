@@ -101,6 +101,12 @@ import { plainToInstance } from 'class-transformer';
       @Query('jobType') jobType?: string,
       @Query('workingMode') workingMode?: string,
       @Query('jobCategoryId') jobCategoryId?: string,
+      @Query('location') location?: string,
+      @Query('categories') categories?: string | string[],
+      @Query('level') level?: string,
+      @Query('salaryMin') salaryMin?: string,
+      @Query('salaryMax') salaryMax?: string,
+      @Query('experience') experience?: string,
     ) {
       const recruiterId = req.user.id;
       const { data, total } = await this.jobsService.findAllByRecruiter(
@@ -111,7 +117,13 @@ import { plainToInstance } from 'class-transformer';
         status,
         jobType,
         workingMode,
-        jobCategoryId
+        jobCategoryId,
+        location,
+        categories,
+        level,
+        salaryMin !== undefined ? Number(salaryMin) : undefined,
+        salaryMax !== undefined ? Number(salaryMax) : undefined,
+        experience,
       );
 
       // Normalize IDs to strings for client compatibility

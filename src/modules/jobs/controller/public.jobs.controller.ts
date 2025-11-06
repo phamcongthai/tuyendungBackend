@@ -54,6 +54,12 @@ export class PublicJobsController {
     @Query('jobType') jobType?: string,
     @Query('workingMode') workingMode?: string,
     @Query('jobCategoryId') jobCategoryId?: string,
+    @Query('location') location?: string,
+    @Query('categories') categories?: string | string[],
+    @Query('level') level?: string,
+    @Query('salaryMin') salaryMin?: string,
+    @Query('salaryMax') salaryMax?: string,
+    @Query('experience') experience?: string,
   ) {
     const status = 'active';
 
@@ -66,6 +72,12 @@ export class PublicJobsController {
       jobType,
       workingMode,
       jobCategoryId,
+      location,
+      categories,
+      level,
+      salaryMin !== undefined ? Number(salaryMin) : undefined,
+      salaryMax !== undefined ? Number(salaryMax) : undefined,
+      experience,
     );
     
     // Return populated companyId as is (Mongoose populate) for faster client consumption

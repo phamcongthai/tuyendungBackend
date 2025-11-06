@@ -55,6 +55,13 @@ export class PublicCompaniesController {
     };
   }
 
+  @ApiOperation({ summary: 'Get total companies count (public)' })
+  @Get('count')
+  async count() {
+    const total = await this.companyModel.countDocuments({ deleted: { $ne: true } });
+    return { total };
+  }
+
   @ApiOperation({ summary: 'Get company by slug (public, explicit path)' })
   @ApiParam({ name: 'slug', type: String })
   @ApiResponse({ status: 200 })

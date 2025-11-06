@@ -51,9 +51,7 @@ export class UpdateUserDto {
   @IsObject()
   cvFields?: Record<string, string>;
 
-  @IsOptional()
-  @IsObject()
-  cvData?: any;
+  
 
   // Personal profile fields
   @IsOptional()

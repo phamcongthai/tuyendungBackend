@@ -21,8 +21,48 @@ export class JobsService {
     jobType?: string,
     workingMode?: string,
     jobCategoryId?: string,
+    location?: string,
+    categories?: string[] | string,
+    level?: string,
+    salaryMin?: number,
+    salaryMax?: number,
+    experience?: string,
   ): Promise<{ data: Job[]; total: number }> {
-    return await this.jobsRepo.findAll(page, limit, search, status, jobType, workingMode, jobCategoryId);
+    return await this.jobsRepo.findAll(page, limit, search, status, jobType, workingMode, jobCategoryId, categories, level, salaryMin, salaryMax, experience, location);
+  }
+
+  async findAllByRecruiter(
+    recruiterId: string,
+    page: number,
+    limit: number,
+    search: string,
+    status?: string,
+    jobType?: string,
+    workingMode?: string,
+    jobCategoryId?: string,
+    location?: string,
+    categories?: string[] | string,
+    level?: string,
+    salaryMin?: number,
+    salaryMax?: number,
+    experience?: string,
+  ): Promise<{ data: Job[]; total: number }> {
+    return await this.jobsRepo.findAllByRecruiter(
+      recruiterId,
+      page,
+      limit,
+      search,
+      status,
+      jobType,
+      workingMode,
+      jobCategoryId,
+      categories,
+      level,
+      salaryMin,
+      salaryMax,
+      experience,
+      location,
+    );
   }
 //[POST] : Tạo mới bản ghi
   async create(
@@ -66,28 +106,7 @@ export class JobsService {
 
   // ============ RECRUITER-SPECIFIC METHODS ============
 
-  //[GET] : Lấy ra toàn bộ job của một recruiter cụ thể
-  async findAllByRecruiter(
-    recruiterId: string,
-    page: number,
-    limit: number,
-    search: string,
-    status?: string,
-    jobType?: string,
-    workingMode?: string,
-    jobCategoryId?: string,
-  ): Promise<{ data: Job[]; total: number }> {
-    return await this.jobsRepo.findAllByRecruiter(
-      recruiterId, 
-      page, 
-      limit, 
-      search, 
-      status,
-      jobType,
-      workingMode,
-      jobCategoryId
-    );
-  }
+  //[GET] : Lấy ra toàn bộ job của một recruiter cụ thể (xem phương thức phía trên có tham số location)
 
   //[POST] : Tạo mới job bởi recruiter
   async createByRecruiter(

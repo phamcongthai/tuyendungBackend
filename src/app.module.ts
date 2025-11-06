@@ -23,7 +23,11 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { SiteSettingsModule } from './modules/site-settings/site-settings.module';
 import { BlogsModule } from './modules/blogs/blogs.module';
 import { AiModule } from './modules/ai/ai.module';
-
+import { JobPackagesModule } from './modules/job-packages/job-packages.module';
+import { BannersModule } from './modules/banners/banners.module';
+import { BannerPackagesModule } from './modules/banner-packages/banner-packages.module';
+import { PaymentsModule} from './modules/paymentsModule/payments.module';
+import { VnpayModule } from 'nestjs-vnpay';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -57,7 +61,28 @@ import { AiModule } from './modules/ai/ai.module';
     NotificationsModule,
     SiteSettingsModule,
     BlogsModule,
-    AiModule
+    AiModule,
+    JobPackagesModule,
+    BannersModule,
+    BannerPackagesModule,
+    VnpayModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (config: ConfigService) => {
+        const tmn = config.get<string>('VNPAY_TMN_CODE') || config.get<string>('vnp_TmnCode');
+        const secret = config.get<string>('VNPAY_SECURE_SECRET') || config.get<string>('vnp_HashSecret');
+        if (!tmn || !secret) {
+          throw new Error('Missing VNPay credentials (VNPAY_TMN_CODE / VNPAY_SECURE_SECRET)');
+        }
+        return {
+          tmnCode: tmn,
+          secureSecret: secret,
+          vnpayHost: config.get<string>('VNPAY_HOST') || 'https://sandbox.vnpayment.vn',
+          testMode: (config.get<string>('NODE_ENV') || process.env.NODE_ENV) !== 'production',
+        };
+      },
+      inject: [ConfigService],
+    }),
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

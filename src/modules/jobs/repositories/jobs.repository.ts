@@ -4,7 +4,8 @@ import { Model, Types } from 'mongoose';
 import { Job, JobDocument } from '../jobs.schema';
 import { CreateJobDto } from '../dto/request/create-job.dto';
 import { UpdateJobDto } from '../dto/request/update-job.dto';
-import { buildNameSearchQuery } from 'src/utils/buildSearchQuery';
+import { Company } from '../../companies/schemas/company.schema';
+import { JobCategories } from '../../job-categories/job-categories.schema';
 import cloudinary from '../../../utils/cloudinary.config';
 import * as streamifier from 'streamifier';
 import { generateUniqueSlug } from '../../../utils/slug';
@@ -14,6 +15,8 @@ import { RecruiterRepository } from '../../recruiters/repositories/recruiters.re
 export class JobsRepository {
   constructor(
     @InjectModel(Job.name) private jobsModel: Model<JobDocument>,
+    @InjectModel(Company.name) private companyModel: Model<any>,
+    @InjectModel(JobCategories.name) private jobCategoriesModel: Model<any>,
     private readonly recruiterRepository: RecruiterRepository,
     @InjectModel('Application') private applicationModel: Model<any>,
   ) {}
@@ -27,11 +30,106 @@ export class JobsRepository {
     jobType?: string,
     workingMode?: string,
     jobCategoryId?: string,
+    categories?: string[] | string,
+    level?: string,
+    salaryMin?: number,
+    salaryMax?: number,
+    experience?: string,
+    location?: string,
   ): Promise<{ data: Job[]; total: number }> {
-    const query: any = {
-      ...buildNameSearchQuery(search),
-      deleted: false,
-    };
+    const query: any = { deleted: false };
+
+    // Free-text regex across multiple fields (jobs + company name)
+    if (search && String(search).trim().length > 0) {
+      const buildViRegex = (raw: string) => {
+        const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const map: Record<string, string> = {
+          a: 'aàáạảãâầấậẩẫăằắặẳẵ',
+          e: 'eèéẹẻẽêềếệểễ',
+          i: 'iìíịỉĩ',
+          o: 'oòóọỏõôồốộổỗơờớợởỡ',
+          u: 'uùúụủũưừứựửữ',
+          y: 'yỳýỵỷỹ',
+          d: 'dđ',
+        };
+        const toClass = (ch: string) => {
+          const lower = ch.toLowerCase();
+          if (map[lower]) {
+            const cls = map[lower];
+            const full = cls + cls.toUpperCase();
+            return `[${full}]`;
+          }
+          if (/[\s_-]/.test(ch)) return '.*';
+          return escapeRegExp(ch);
+        };
+        const pattern = Array.from(raw).map(toClass).join('');
+        return new RegExp(pattern, 'i');
+      };
+      const viRe = buildViRegex(String(search).trim());
+      const regex = { $regex: viRe } as any;
+      // Find companyIds whose name matches
+      let companyIds: Types.ObjectId[] = [] as any;
+      try {
+        const matchedCompanies = await this.companyModel.find({ name: regex as any }).select('_id');
+        companyIds = matchedCompanies.map((c: any) => new Types.ObjectId(String(c._id)));
+      } catch {}
+      query.$or = [
+        { title: regex },
+        { description: regex },
+        { requirements: regex },
+        { benefits: regex },
+        { skills: regex },
+        { location: regex },
+        { levelVi: regex },
+        { levelEn: regex },
+        { education: regex },
+        ...(companyIds.length ? [{ companyId: { $in: companyIds } }] : []),
+      ];
+    }
+
+    if (location && String(location).trim().length > 0) {
+      query.location = { $regex: String(location).trim(), $options: 'i' };
+    }
+
+    // Categories by titles -> resolve to ids
+    if (categories && (Array.isArray(categories) || String(categories).trim().length > 0)) {
+      const cats = Array.isArray(categories)
+        ? categories
+        : String(categories).split(',').map((s) => s.trim()).filter(Boolean);
+      if (cats.length) {
+        const or = cats.map((c) => ({ title: { $regex: new RegExp(c, 'i') } }));
+        const list = await this.jobCategoriesModel.find({ $or: or }).select('_id');
+        const ids = list.map((d: any) => new Types.ObjectId(String(d._id)));
+        if (ids.length) query.jobCategoryId = { $in: ids };
+      }
+    }
+
+    // Level filter: matches vi/en
+    if (level && String(level).trim()) {
+      const re = new RegExp(String(level).trim(), 'i');
+      query.$and = [...(query.$and || []), { $or: [{ levelVi: re }, { levelEn: re }] }];
+    }
+
+    // Experience heuristics: match in requirements/description
+    if (experience && String(experience).trim()) {
+      const re = new RegExp(String(experience).trim(), 'i');
+      query.$and = [...(query.$and || []), { $or: [{ requirements: re }, { description: re }] }];
+    }
+
+    // Salary range overlap
+    if (typeof salaryMin === 'number' || typeof salaryMax === 'number') {
+      const min = typeof salaryMin === 'number' ? salaryMin : 0;
+      const max = typeof salaryMax === 'number' ? salaryMax : Number.MAX_SAFE_INTEGER;
+      query.$and = [
+        ...(query.$and || []),
+        {
+          $or: [
+            { isSalaryNegotiable: true },
+            { $and: [ { salaryMin: { $lte: max } }, { salaryMax: { $gte: min } } ] },
+          ],
+        },
+      ];
+    }
 
     // Filter by status if provided (draft | active | expired)
     if (status) {
@@ -279,12 +377,103 @@ export class JobsRepository {
     jobType?: string,
     workingMode?: string,
     jobCategoryId?: string,
+    categories?: string[] | string,
+    level?: string,
+    salaryMin?: number,
+    salaryMax?: number,
+    experience?: string,
+    location?: string,
   ): Promise<{ data: Job[]; total: number }> {
     const query: any = {
-      ...buildNameSearchQuery(search),
       recruiterId: new Types.ObjectId(recruiterId),
       deleted: false,
     };
+
+    if (search && String(search).trim().length > 0) {
+      const buildViRegex = (raw: string) => {
+        const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const map: Record<string, string> = {
+          a: 'aàáạảãâầấậẩẫăằắặẳẵ',
+          e: 'eèéẹẻẽêềếệểễ',
+          i: 'iìíịỉĩ',
+          o: 'oòóọỏõôồốộổỗơờớợởỡ',
+          u: 'uùúụủũưừứựửữ',
+          y: 'yỳýỵỷỹ',
+          d: 'dđ',
+        };
+        const toClass = (ch: string) => {
+          const lower = ch.toLowerCase();
+          if (map[lower]) {
+            const cls = map[lower];
+            const full = cls + cls.toUpperCase();
+            return `[${full}]`;
+          }
+          if (/[\s_-]/.test(ch)) return '.*';
+          return escapeRegExp(ch);
+        };
+        const pattern = Array.from(raw).map(toClass).join('');
+        return new RegExp(pattern, 'i');
+      };
+      const viRe = buildViRegex(String(search).trim());
+      const regex = { $regex: viRe } as any;
+      let companyIds: Types.ObjectId[] = [] as any;
+      try {
+        const matchedCompanies = await this.companyModel.find({ name: regex as any }).select('_id');
+        companyIds = matchedCompanies.map((c: any) => new Types.ObjectId(String(c._id)));
+      } catch {}
+      query.$or = [
+        { title: regex },
+        { description: regex },
+        { requirements: regex },
+        { benefits: regex },
+        { skills: regex },
+        { location: regex },
+        { levelVi: regex },
+        { levelEn: regex },
+        { education: regex },
+        ...(companyIds.length ? [{ companyId: { $in: companyIds } }] : []),
+      ];
+    }
+
+    if (location && String(location).trim().length > 0) {
+      query.location = { $regex: String(location).trim(), $options: 'i' };
+    }
+
+    if (categories && (Array.isArray(categories) || String(categories).trim().length > 0)) {
+      const cats = Array.isArray(categories)
+        ? categories
+        : String(categories).split(',').map((s) => s.trim()).filter(Boolean);
+      if (cats.length) {
+        const or = cats.map((c) => ({ title: { $regex: new RegExp(c, 'i') } }));
+        const list = await this.jobCategoriesModel.find({ $or: or }).select('_id');
+        const ids = list.map((d: any) => new Types.ObjectId(String(d._id)));
+        if (ids.length) query.jobCategoryId = { $in: ids };
+      }
+    }
+
+    if (level && String(level).trim()) {
+      const re = new RegExp(String(level).trim(), 'i');
+      query.$and = [...(query.$and || []), { $or: [{ levelVi: re }, { levelEn: re }] }];
+    }
+
+    if (experience && String(experience).trim()) {
+      const re = new RegExp(String(experience).trim(), 'i');
+      query.$and = [...(query.$and || []), { $or: [{ requirements: re }, { description: re }] }];
+    }
+
+    if (typeof salaryMin === 'number' || typeof salaryMax === 'number') {
+      const min = typeof salaryMin === 'number' ? salaryMin : 0;
+      const max = typeof salaryMax === 'number' ? salaryMax : Number.MAX_SAFE_INTEGER;
+      query.$and = [
+        ...(query.$and || []),
+        {
+          $or: [
+            { isSalaryNegotiable: true },
+            { $and: [ { salaryMin: { $lte: max } }, { salaryMax: { $gte: min } } ] },
+          ],
+        },
+      ];
+    }
 
     // Filter by status if provided (draft | active | expired)
     if (status) {

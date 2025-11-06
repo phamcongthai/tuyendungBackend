@@ -54,6 +54,18 @@ export class Company {
   // Liên kết Job
   @Prop({ type: [Types.ObjectId], ref: 'Job', default: [] })
   jobs: Types.ObjectId[];
+
+  // Gói đăng tin hiện tại
+  @Prop({ type: Types.ObjectId, ref: 'JobPackage', default: null })
+  currentJobPackageId?: Types.ObjectId | null;
+
+  // Thời điểm hết hạn gói
+  @Prop({ type: Date, default: null })
+  packageExpireAt?: Date | null;
+
+  // Số lượng bài đăng còn lại trong kỳ
+  @Prop({ type: Number, default: 0 })
+  remainingJobPosts?: number;
 }
 
 export const CompanySchema = SchemaFactory.createForClass(Company);

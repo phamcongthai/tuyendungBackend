@@ -1,0 +1,11 @@
+export enum BannerPosition {
+  BELOW_SEARCH_BAR = 'BELOW_SEARCH_BAR',
+  BELOW_FEATURED_COMPANIES = 'BELOW_FEATURED_COMPANIES',
+}
+
+
+
+
+
+
+

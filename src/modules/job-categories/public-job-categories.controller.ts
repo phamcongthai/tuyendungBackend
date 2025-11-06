@@ -57,7 +57,7 @@ export class PublicJobCategoriesController {
 
     // Aggregate active job counts per category
     const counts = await this.jobModel.aggregate([
-      { $match: { deleted: false, isActive: true, jobCategoryId: { $ne: null } } },
+      { $match: { deleted: false, status: 'active', jobCategoryId: { $ne: null } } },
       { $group: { _id: '$jobCategoryId', count: { $sum: 1 } } },
     ]);
     const countMap = new Map<string, number>(counts.map((c: any) => [String(c._id), c.count]));
@@ -71,7 +71,11 @@ export class PublicJobCategoriesController {
       // Assuming a 'logo' field may exist on categories; if not, leave undefined
       logo: (cat as any).logo,
       jobCount: countMap.get(String(cat._id)) || 0,
-    }));
+    }))
+    // Only return categories that have at least 1 active job
+    .filter((c: any) => c.jobCount > 0)
+    // Sort by jobCount desc
+    .sort((a: any, b: any) => b.jobCount - a.jobCount);
 
     return {
       success: true,

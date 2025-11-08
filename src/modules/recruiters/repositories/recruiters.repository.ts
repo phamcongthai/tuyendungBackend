@@ -140,4 +140,19 @@ export class RecruiterRepository {
       throw new BadRequestException(`Upload failed: ${error.message}`);
     }
   }
+
+  // [PATCH] : Set avatar from URL (for Google OAuth)
+  async setAvatarByAccountId(id: string, avatarUrl: string): Promise<any> {
+    if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid accountId');
+    const accountId = new Types.ObjectId(id);
+    
+    // Try to update existing recruiter profile
+    let updatedRecruiter = await this.recruiterModel.findOneAndUpdate(
+      { accountId },
+      { $set: { avatar: avatarUrl } },
+      { new: true }
+    );
+
+    return updatedRecruiter;
+  }
 }

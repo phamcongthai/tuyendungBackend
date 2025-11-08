@@ -12,5 +12,6 @@ import { AuthModule } from '../auth/auth.module';
   ],
   controllers: [RecruiterController],
   providers: [RecruiterService, RecruiterRepository],
+  exports: [RecruiterRepository],
 })
 export class RecruiterModule {}

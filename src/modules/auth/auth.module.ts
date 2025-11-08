@@ -11,6 +11,8 @@ import { JwtStrategy } from './strategies.ts/jwt.strategy';
 import { EmailVerification, EmailVerificationDocument, EmailVerificationSchema } from './schemas/email_verifications.schema';
 import { RolesModule } from '../roles/roles.module';
 import { Account, AccountSchema } from '../accounts/schema/account.schema';
+import { Recruiter, RecruiterSchema } from '../recruiters/schemas/recruiter.schema';
+import { RecruiterRepository } from '../recruiters/repositories/recruiters.repository';
 
 @Module({
   imports: [
@@ -25,11 +27,12 @@ import { Account, AccountSchema } from '../accounts/schema/account.schema';
     }),
     MongooseModule.forFeature([
       { name: EmailVerification.name, schema: EmailVerificationSchema },
-      { name: Account.name, schema: AccountSchema }
+      { name: Account.name, schema: AccountSchema },
+      { name: Recruiter.name, schema: RecruiterSchema }
     ])
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, RecruiterRepository],
   exports: [AuthService, JwtStrategy],
 })
 export class AuthModule {}

@@ -58,19 +58,19 @@ export class PaymentsController {
       if (verifyResult.isSuccess) {
         await this.paymentsService.updateOrderStatusByTxnRef(verifyResult.orderTxnRef, 'PAID', verifyResult.gatewayData);
         // Redirect to recruiter's order management page after successful payment
-        const recruiterAppUrl = process.env.RECRUITER_APP_URL || process.env.FRONTEND_URL;
+        const recruiterAppUrl = process.env.RECRUITER_APP_URL || process.env.FRONTEND_RECRUITER_URL;
         const url = `${recruiterAppUrl}/banners/orders?payment=success&txnRef=${verifyResult.orderTxnRef}`;
         return res.redirect(url);
       } else {
         await this.paymentsService.updateOrderStatusByTxnRef(verifyResult.orderTxnRef, 'FAILED', verifyResult.gatewayData);
         // Redirect to recruiter's order management page even on failure
-        const recruiterAppUrl = process.env.RECRUITER_APP_URL || process.env.FRONTEND_URL;
+        const recruiterAppUrl = process.env.RECRUITER_APP_URL || process.env.FRONTEND_RECRUITER_URL;
         const url = `${recruiterAppUrl}/banners/orders?payment=failed&txnRef=${verifyResult.orderTxnRef}`;
         return res.redirect(url);
       }
     } catch (error) {
       return res.redirect(
-        `${process.env.RECRUITER_APP_URL || process.env.FRONTEND_URL}/banners/orders?payment=error&message=${error.message}`,
+        `${process.env.RECRUITER_APP_URL || process.env.FRONTEND_RECRUITER_URL}/banners/orders?payment=error&message=${error.message}`,
       );
     }
   }
@@ -125,18 +125,18 @@ export class PaymentsController {
       const verifyResult = await this.paymentsService.verifyReturn(query);
       if (verifyResult.isSuccess) {
         await this.paymentsService.updateJobFeatureOrderStatusByTxnRef(verifyResult.orderTxnRef, 'PAID', verifyResult.gatewayData);
-        const recruiterAppUrl = process.env.RECRUITER_APP_URL || process.env.FRONTEND_URL;
+        const recruiterAppUrl = process.env.RECRUITER_APP_URL || process.env.FRONTEND_RECRUITER_URL;
         const url = `${recruiterAppUrl}/jobs?payment=success&txnRef=${verifyResult.orderTxnRef}`;
         return res.redirect(url);
       } else {
         await this.paymentsService.updateJobFeatureOrderStatusByTxnRef(verifyResult.orderTxnRef, 'FAILED', verifyResult.gatewayData);
-        const recruiterAppUrl = process.env.RECRUITER_APP_URL || process.env.FRONTEND_URL;
+        const recruiterAppUrl = process.env.RECRUITER_APP_URL || process.env.FRONTEND_RECRUITER_URL;
         const url = `${recruiterAppUrl}/jobs?payment=failed&txnRef=${verifyResult.orderTxnRef}`;
         return res.redirect(url);
       }
     } catch (error) {
       return res.redirect(
-        `${process.env.RECRUITER_APP_URL || process.env.FRONTEND_URL}/jobs?payment=error&message=${error.message}`,
+        `${process.env.RECRUITER_APP_URL || process.env.FRONTEND_RECRUITER_URL}/jobs?payment=error&message=${error.message}`,
       );
     }
   }

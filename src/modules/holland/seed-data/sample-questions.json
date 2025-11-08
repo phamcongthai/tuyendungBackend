@@ -1,0 +1,92 @@
+[
+  {
+    "order": 1,
+    "content": "Bạn thích làm việc với máy móc, công cụ và thiết bị",
+    "category": "R"
+  },
+  {
+    "order": 2,
+    "content": "Bạn thích sửa chữa đồ điện tử hoặc thiết bị cơ khí",
+    "category": "R"
+  },
+  {
+    "order": 3,
+    "content": "Bạn thích làm việc ngoài trời với động vật hoặc cây cối",
+    "category": "R"
+  },
+  {
+    "order": 4,
+    "content": "Bạn thích nghiên cứu và phân tích dữ liệu khoa học",
+    "category": "I"
+  },
+  {
+    "order": 5,
+    "content": "Bạn thích giải quyết các vấn đề phức tạp bằng logic",
+    "category": "I"
+  },
+  {
+    "order": 6,
+    "content": "Bạn thích đọc sách về khoa học và công nghệ",
+    "category": "I"
+  },
+  {
+    "order": 7,
+    "content": "Bạn thích vẽ, thiết kế hoặc sáng tạo nghệ thuật",
+    "category": "A"
+  },
+  {
+    "order": 8,
+    "content": "Bạn thích viết truyện, thơ hoặc kịch bản",
+    "category": "A"
+  },
+  {
+    "order": 9,
+    "content": "Bạn thích chơi nhạc cụ hoặc hát",
+    "category": "A"
+  },
+  {
+    "order": 10,
+    "content": "Bạn thích giúp đỡ người khác giải quyết vấn đề",
+    "category": "S"
+  },
+  {
+    "order": 11,
+    "content": "Bạn thích dạy học hoặc hướng dẫn người khác",
+    "category": "S"
+  },
+  {
+    "order": 12,
+    "content": "Bạn thích làm việc trong môi trường chăm sóc sức khỏe",
+    "category": "S"
+  },
+  {
+    "order": 13,
+    "content": "Bạn thích thuyết phục và đàm phán với người khác",
+    "category": "E"
+  },
+  {
+    "order": 14,
+    "content": "Bạn thích lãnh đạo và quản lý nhóm",
+    "category": "E"
+  },
+  {
+    "order": 15,
+    "content": "Bạn thích bán hàng và marketing sản phẩm",
+    "category": "E"
+  },
+  {
+    "order": 16,
+    "content": "Bạn thích làm việc với số liệu và báo cáo",
+    "category": "C"
+  },
+  {
+    "order": 17,
+    "content": "Bạn thích tổ chức và sắp xếp công việc theo quy trình",
+    "category": "C"
+  },
+  {
+    "order": 18,
+    "content": "Bạn thích làm việc văn phòng với máy tính và giấy tờ",
+    "category": "C"
+  }
+]

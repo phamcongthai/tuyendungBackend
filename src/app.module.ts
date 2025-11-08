@@ -27,6 +27,7 @@ import { JobPackagesModule } from './modules/job-packages/job-packages.module';
 import { BannersModule } from './modules/banners/banners.module';
 import { BannerPackagesModule } from './modules/banner-packages/banner-packages.module';
 import { PaymentsModule} from './modules/paymentsModule/payments.module';
+import { HollandModule } from './modules/holland/holland.module';
 import { VnpayModule } from 'nestjs-vnpay';
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { VnpayModule } from 'nestjs-vnpay';
     JobPackagesModule,
     BannersModule,
     BannerPackagesModule,
+    HollandModule,
     VnpayModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => {

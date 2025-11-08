@@ -135,6 +135,50 @@ export class CompaniesRepository {
     }
   }
 
+  // [POST] : /companies/:id/background (Upload background by company ID)
+  async uploadBackgroundById(id: string, file: Express.Multer.File): Promise<any> {
+    if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid company ID');
+    
+    try {
+      // Upload to cloudinary
+      const uploadResult = await new Promise<string>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { 
+            folder: 'backgrounds/companies',
+            transformation: [
+              { width: 1920, height: 400, crop: 'fill' },
+              { quality: 'auto', fetch_format: 'auto' }
+            ]
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result?.secure_url || '');
+          },
+        );
+        streamifier.createReadStream(file.buffer).pipe(uploadStream);
+      });
+
+      // Update background in database
+      const updatedCompany = await this.companyModel.findOneAndUpdate(
+        { _id: new Types.ObjectId(id), deleted: { $ne: true } },
+        { $set: { background: uploadResult } },
+        { new: true }
+      );
+
+      if (!updatedCompany) {
+        throw new BadRequestException('Company not found');
+      }
+
+      return {
+        success: true,
+        message: 'Background uploaded successfully',
+        data: updatedCompany
+      };
+    } catch (error) {
+      throw new BadRequestException(`Upload failed: ${error.message}`);
+    }
+  }
+
   // [POST] : /companies/profile/logo (Legacy method for account-based logo upload)
   async uploadLogo(id: string, file: Express.Multer.File): Promise<any> {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid accountId');

@@ -46,6 +46,31 @@ export class User {
 
   @Prop({ default: null })
   cvPdfUrl: string;
+
+  // Holland Test Score
+  @Prop({
+    type: {
+      R: { type: Number, default: 0 },
+      I: { type: Number, default: 0 },
+      A: { type: Number, default: 0 },
+      S: { type: Number, default: 0 },
+      E: { type: Number, default: 0 },
+      C: { type: Number, default: 0 }
+    },
+    default: null
+  })
+  hollandScore: {
+    R: number;
+    I: number;
+    A: number;
+    S: number;
+    E: number;
+    C: number;
+  } | null;
+
+  // Holland Type (top 3 categories)
+  @Prop({ default: null })
+  hollandType: string; // ví dụ: "A-S-E"
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

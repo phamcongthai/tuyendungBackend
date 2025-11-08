@@ -117,4 +117,19 @@ export class UsersRepository {
 			} : null
 		};
 	}
+
+	async updateHollandScore(accountId: string, scores: any, hollandType: string) {
+		const accountObjectId = new Types.ObjectId(accountId);
+		const updated = await this.userModel.findOneAndUpdate(
+			{ accountId: accountObjectId },
+			{ 
+				$set: { 
+					hollandScore: scores, 
+					hollandType: hollandType 
+				} 
+			},
+			{ new: true, upsert: false }
+		);
+		return updated;
+	}
 }

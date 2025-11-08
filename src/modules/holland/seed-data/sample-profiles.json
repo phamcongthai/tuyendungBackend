@@ -1,0 +1,76 @@
+[
+  {
+    "code": "R-I-C",
+    "title": "Người thực tế - Nghiên cứu - Truyền thống",
+    "description": "Bạn là người thích làm việc với công cụ, máy móc và có khả năng phân tích tốt. Bạn thích làm việc theo quy trình rõ ràng và có tổ chức.",
+    "suitableCareers": [
+      "Kỹ sư cơ khí",
+      "Kỹ sư điện tử",
+      "Lập trình viên",
+      "Kỹ thuật viên IT",
+      "Kiến trúc sư"
+    ],
+    "suggestedSkills": [
+      "Kỹ năng kỹ thuật",
+      "Tư duy logic",
+      "Quản lý dự án",
+      "Phân tích dữ liệu"
+    ]
+  },
+  {
+    "code": "A-S-E",
+    "title": "Người sáng tạo - Xã hội - Kinh doanh",
+    "description": "Bạn là người sáng tạo, thích giao tiếp và có khả năng thuyết phục. Bạn thích làm việc với con người và có tinh thần kinh doanh.",
+    "suitableCareers": [
+      "Marketing Manager",
+      "Content Creator",
+      "Nhà thiết kế đồ họa",
+      "PR Specialist",
+      "Event Planner",
+      "Sales Manager"
+    ],
+    "suggestedSkills": [
+      "Sáng tạo nội dung",
+      "Giao tiếp",
+      "Thuyết trình",
+      "Quản lý thương hiệu",
+      "Networking"
+    ]
+  },
+  {
+    "code": "S-E-A",
+    "title": "Người xã hội - Kinh doanh - Sáng tạo",
+    "description": "Bạn thích làm việc với con người, có khả năng lãnh đạo và sáng tạo. Bạn giỏi trong việc truyền cảm hứng và tổ chức sự kiện.",
+    "suitableCareers": [
+      "HR Manager",
+      "Teacher",
+      "Social Worker",
+      "Event Manager",
+      "Community Manager"
+    ],
+    "suggestedSkills": [
+      "Quản lý nhân sự",
+      "Tổ chức sự kiện",
+      "Coaching",
+      "Public Speaking"
+    ]
+  },
+  {
+    "code": "I-A-S",
+    "title": "Người nghiên cứu - Sáng tạo - Xã hội",
+    "description": "Bạn thích nghiên cứu, sáng tạo và giúp đỡ người khác. Bạn có khả năng phân tích và truyền đạt kiến thức một cách sáng tạo.",
+    "suitableCareers": [
+      "Nhà nghiên cứu",
+      "Giảng viên đại học",
+      "Nhà tâm lý học",
+      "UX Researcher",
+      "Data Scientist"
+    ],
+    "suggestedSkills": [
+      "Nghiên cứu khoa học",
+      "Phân tích dữ liệu",
+      "Viết báo cáo",
+      "Tư duy phản biện"
+    ]
+  }
+]

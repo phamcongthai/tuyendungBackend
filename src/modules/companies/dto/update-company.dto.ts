@@ -16,6 +16,12 @@ export class UpdateCompanyDto {
   logo?: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.background && o.background.trim() !== '')
+  @IsUrl({}, { message: 'Background must be a valid URL address' })
+  @IsString()
+  background?: string;
+
+  @IsOptional()
   @IsUrl()
   website?: string;
 

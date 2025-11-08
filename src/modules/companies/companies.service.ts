@@ -191,6 +191,11 @@ export class CompaniesService {
     return this.companiesRepository.uploadLogoById(companyId, file);
   }
 
+  //[POST] : /companies/:id/background
+  async uploadBackground(companyId: string, file: Express.Multer.File) {
+    return this.companiesRepository.uploadBackgroundById(companyId, file);
+  }
+
   //[GET] : /companies/my (Get companies created by current recruiter)
   async getMyCompanies(accountId: string) {
     try {

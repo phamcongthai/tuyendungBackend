@@ -17,6 +17,9 @@ export class Company {
   logo?: string; // Logo công ty
 
   @Prop({ trim: true })
+  background?: string; // Ảnh background công ty
+
+  @Prop({ trim: true })
   website?: string; // Website
 
   @Prop({ trim: true })

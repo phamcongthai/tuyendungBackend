@@ -65,15 +65,21 @@ export class ApplicationsRepository {
     const query = { accountId: id } as any;
     const data = await this.applicationModel
       .find(query)
-      .populate({ path: 'jobId', select: '_id title slug' })
+      .populate({ 
+        path: 'jobId', 
+        select: '_id title slug', 
+        model: 'Job',
+        match: { deleted: { $ne: true } }
+      })
       .populate({ path: 'userProfile', select: 'avatar dateOfBirth gender city desiredPosition summaryExperience skills cvId cvFields cvPdfUrl' })
       .populate({ path: 'account', select: 'fullName email phone' })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
+      .lean()
       .exec();
     const total = await this.applicationModel.countDocuments(query);
-    return { data, total };
+    return { data: data as any, total };
   }
 
   async findAllByJob(jobId: string, page = 1, limit = 12): Promise<{ data: Application[]; total: number }> {

@@ -87,6 +87,25 @@ export class CompaniesController {
     return this.companiesService.uploadLogo(companyId, file);
   }
 
+  //[POST] : /companies/:id/background (Upload company background)
+  @Post(':id/background')
+  @UseInterceptors(FileInterceptor('background', multerConfig))
+  @ApiConsumes('multipart/form-data')
+  async uploadBackground(
+    @Param('id') companyId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }), // 10MB
+          new FileTypeValidator({ fileType: /\/(jpg|jpeg|png|gif|webp)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.companiesService.uploadBackground(companyId, file);
+  }
+
   //[POST] : /companies/avatar
   // @Post('avatar')
   // @UseInterceptors(FileInterceptor('avatar', multerConfig))

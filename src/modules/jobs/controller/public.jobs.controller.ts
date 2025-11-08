@@ -19,6 +19,7 @@ export class PublicJobsController {
   @ApiQuery({ name: 'jobType', required: false, type: String, description: 'Filter by job type (fulltime, parttime, internship, contract, freelance)' })
   @ApiQuery({ name: 'workingMode', required: false, type: String, description: 'Filter by working mode (onsite, remote, hybrid)' })
   @ApiQuery({ name: 'jobCategoryId', required: false, type: String, description: 'Filter by job category ID' })
+  @ApiQuery({ name: 'featured', required: false, type: Boolean, description: 'Filter featured jobs (true) or non-featured (false)' })
   @ApiResponse({ 
     status: 200, 
     description: 'Active jobs retrieved successfully',
@@ -60,6 +61,7 @@ export class PublicJobsController {
     @Query('salaryMin') salaryMin?: string,
     @Query('salaryMax') salaryMax?: string,
     @Query('experience') experience?: string,
+    @Query('featured') featured?: string,
   ) {
     const status = 'active';
 
@@ -78,6 +80,7 @@ export class PublicJobsController {
       salaryMin !== undefined ? Number(salaryMin) : undefined,
       salaryMax !== undefined ? Number(salaryMax) : undefined,
       experience,
+      featured !== undefined ? (String(featured).toLowerCase() === 'true' || String(featured) === '1') : undefined,
     );
     
     // Return populated companyId as is (Mongoose populate) for faster client consumption

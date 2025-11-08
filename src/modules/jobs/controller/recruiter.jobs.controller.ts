@@ -118,12 +118,13 @@ import { plainToInstance } from 'class-transformer';
         jobType,
         workingMode,
         jobCategoryId,
-        location,
         categories,
         level,
         salaryMin !== undefined ? Number(salaryMin) : undefined,
         salaryMax !== undefined ? Number(salaryMax) : undefined,
         experience,
+        location,
+        undefined, // featured parameter not used in recruiter context
       );
 
       // Normalize IDs to strings for client compatibility

@@ -36,6 +36,7 @@ export class JobsRepository {
     salaryMax?: number,
     experience?: string,
     location?: string,
+    featured?: boolean,
   ): Promise<{ data: Job[]; total: number }> {
     const query: any = { deleted: false };
 
@@ -154,6 +155,12 @@ export class JobsRepository {
       query.jobCategoryId = jobCategoryId;
     }
 
+    // Featured filter
+    if (typeof featured === 'boolean') {
+      if (featured) query.isFeatured = true;
+      else query.isFeatured = { $ne: true };
+    }
+
     const data = await this.jobsModel
       .find(query)
       .populate({ 
@@ -242,6 +249,9 @@ export class JobsRepository {
       // }
 
       const updateData = { ...updateJobDto } as any;
+      // Prevent recruiters from toggling featured fields directly
+      if (Object.prototype.hasOwnProperty.call(updateData, 'isFeatured')) delete updateData.isFeatured;
+      if (Object.prototype.hasOwnProperty.call(updateData, 'featuredPackageId')) delete updateData.featuredPackageId;
 
       // Reject attempts to null-out required references
       if (Object.prototype.hasOwnProperty.call(updateData, 'companyId') && !updateData.companyId) {
@@ -383,10 +393,11 @@ export class JobsRepository {
     salaryMax?: number,
     experience?: string,
     location?: string,
+    featured?: boolean,
   ): Promise<{ data: Job[]; total: number }> {
     const query: any = {
       recruiterId: new Types.ObjectId(recruiterId),
-      deleted: false,
+      deleted: { $ne: true },
     };
 
     if (search && String(search).trim().length > 0) {
@@ -544,12 +555,15 @@ export class JobsRepository {
       // Sinh slug từ title và đảm bảo unique
       const slug = await generateUniqueSlug<JobDocument>(this.jobsModel as any, createJobDto.title);
 
-      // Tạo job mới với recruiterId, companyId và slug
+      // Tạo job mới với recruiterId (đúng _id của recruiter), companyId và slug
       const newJob = new this.jobsModel({
         ...createJobDto,
-        recruiterId: new Types.ObjectId(recruiterId),
+        recruiterId: recruiter.accountId,
         companyId: recruiter.companyId,
         slug,
+        // Security: recruiters cannot self-enable featured without payment
+        isFeatured: false,
+        featuredPackageId: undefined,
       });
 
       return await newJob.save();

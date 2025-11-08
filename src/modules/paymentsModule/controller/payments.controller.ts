@@ -95,4 +95,69 @@ export class PaymentsController {
       },
     };
   }
+
+  // ================= JOB FEATURE PAYMENT ROUTES =================
+
+  @Post('job-feature/create')
+  async createJobFeature(
+    @Req() req,
+    @Body() body: { packageId: string; jobId: string; accountId: string },
+  ) {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const { paymentUrl, orderId } = await this.paymentsService.createJobFeaturePayment(body, ip as string);
+    return { success: true, paymentUrl, orderId };
+  }
+
+  @Get('job-feature/create-redirect')
+  async createJobFeatureRedirect(
+    @Req() req,
+    @Res() res,
+    @Query() query: { packageId: string; jobId: string; accountId: string },
+  ) {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const { paymentUrl } = await this.paymentsService.createJobFeaturePayment(query as any, ip as string);
+    return res.redirect(paymentUrl);
+  }
+
+  @Get('job-feature/return')
+  async handleJobFeatureReturn(@Query() query, @Res() res) {
+    try {
+      const verifyResult = await this.paymentsService.verifyReturn(query);
+      if (verifyResult.isSuccess) {
+        await this.paymentsService.updateJobFeatureOrderStatusByTxnRef(verifyResult.orderTxnRef, 'PAID', verifyResult.gatewayData);
+        const recruiterAppUrl = process.env.RECRUITER_APP_URL || process.env.FRONTEND_URL;
+        const url = `${recruiterAppUrl}/jobs?payment=success&txnRef=${verifyResult.orderTxnRef}`;
+        return res.redirect(url);
+      } else {
+        await this.paymentsService.updateJobFeatureOrderStatusByTxnRef(verifyResult.orderTxnRef, 'FAILED', verifyResult.gatewayData);
+        const recruiterAppUrl = process.env.RECRUITER_APP_URL || process.env.FRONTEND_URL;
+        const url = `${recruiterAppUrl}/jobs?payment=failed&txnRef=${verifyResult.orderTxnRef}`;
+        return res.redirect(url);
+      }
+    } catch (error) {
+      return res.redirect(
+        `${process.env.RECRUITER_APP_URL || process.env.FRONTEND_URL}/jobs?payment=error&message=${error.message}`,
+      );
+    }
+  }
+
+  @Get('job-feature/verify')
+  async verifyJobFeatureReturn(@Query() query) {
+    const verifyResult = await this.paymentsService.verifyReturn(query);
+    try {
+      await this.paymentsService.updateJobFeatureOrderStatusByTxnRef(
+        verifyResult.orderTxnRef,
+        verifyResult.isSuccess ? 'PAID' : 'FAILED',
+        verifyResult.gatewayData,
+      );
+    } catch {}
+    return {
+      success: verifyResult.isSuccess,
+      message: verifyResult.message,
+      data: {
+        txnRef: verifyResult.orderTxnRef,
+        responseCode: query?.vnp_ResponseCode,
+      },
+    };
+  }
 }

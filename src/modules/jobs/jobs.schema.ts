@@ -35,71 +35,71 @@ export class Job {
   description: string; // Mô tả công việc chi tiết
 
   @Prop({ type: String, default: '' })
-  requirements: string; // Yêu cầu ứng viên
+  requirements: string;
 
   @Prop({ type: String, default: '' })
-  benefits: string; // Quyền lợi
+  benefits: string;
 
   @Prop({ type: [String], default: [] })
-  skills: string[]; // Kỹ năng cần có
+  skills: string[];
 
   @Prop({ type: String, enum: JobType, required: true })
-  jobType: JobType; // Loại công việc
+  jobType: JobType;
 
   @Prop({ type: String, enum: WorkingMode, required: true })
-  workingMode: WorkingMode; // Hình thức làm việc
+  workingMode: WorkingMode;
 
   @Prop({ trim: true })
-  location: string; // Địa điểm làm việc
+  location: string;
 
   @Prop({ type: Number })
-  salaryMin?: number; // Mức lương tối thiểu
+  salaryMin?: number;
 
   @Prop({ type: Number })
-  salaryMax?: number; // Mức lương tối đa
+  salaryMax?: number;
 
-  // Lương thỏa thuận
   @Prop({ type: Boolean, default: false })
   isSalaryNegotiable?: boolean;
 
   @Prop({ type: String, enum: ['VND', 'USD'], default: 'VND' })
-  currency: string; // Đơn vị tiền tệ
+  currency: string;
 
-  // Số lượng cần tuyển
   @Prop({ type: Number, default: 1 })
   headcount?: number;
 
-  // Cấp bậc (vi & en)
   @Prop({ type: String, default: '' })
   levelVi?: string;
 
   @Prop({ type: String, default: '' })
   levelEn?: string;
 
-  // Học vấn
   @Prop({ type: String, default: '' })
   education?: string;
 
   @Prop({ type: Date })
-  deadline?: Date; // Hạn nộp hồ sơ
+  deadline?: Date;
 
   @Prop({ type: String, enum: JobStatus, default: JobStatus.DRAFT })
-  status: JobStatus; // Trạng thái tin: draft | active | expired
+  status: JobStatus;
 
   @Prop({ default: false })
-  deleted: boolean; // Đánh dấu xóa mềm
+  deleted: boolean;
 
-  // Job thuộc Recruiter nào
-  @Prop({ type: Types.ObjectId, ref: 'Recruiter', required: true })
+  // recruiterId thực ra lưu accountId của recruiter
+  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
   recruiterId: Types.ObjectId;
 
-  // Job thuộc Company nào
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
   companyId: Types.ObjectId;
 
-  // Job thuộc Category nào
   @Prop({ type: Types.ObjectId, ref: 'JobCategories' })
   jobCategoryId?: Types.ObjectId;
+
+  @Prop({ type: Boolean, default: false })
+  isFeatured?: boolean;
+
+  @Prop({ type: Types.ObjectId, ref: 'JobPackage', default: null })
+  featuredPackageId?: Types.ObjectId | null;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);

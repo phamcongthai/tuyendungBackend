@@ -88,4 +88,68 @@ export class PaymentIntent {
 
 export const PaymentIntentSchema = SchemaFactory.createForClass(PaymentIntent);
 
+// ================= JOB FEATURE ORDERS =================
+
+export type JobFeatureOrderDocument = JobFeatureOrder & Document;
+
+@Schema({ timestamps: true, collection: 'job_feature_orders' })
+export class JobFeatureOrder {
+  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
+  accountId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Recruiter', required: true })
+  recruiterId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
+  companyId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Job', required: true })
+  jobId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'JobPackage', required: true })
+  packageId: Types.ObjectId;
+
+  @Prop({ type: Number, required: true, min: 0 })
+  amount: number; // VND
+
+  @Prop({ type: String, enum: ['vnpay'], default: 'vnpay' })
+  paymentMethod: 'vnpay';
+
+  @Prop({ type: String, enum: ['PENDING', 'PAID', 'FAILED', 'CANCELLED'], default: 'PENDING' })
+  status: PaymentStatus;
+
+  @Prop({ type: String, default: '' })
+  gatewayTxnRef: string; // vnp_TxnRef
+
+  @Prop({ type: Object, default: {} })
+  gatewayMeta: Record<string, any>;
+}
+
+export const JobFeatureOrderSchema = SchemaFactory.createForClass(JobFeatureOrder);
+
+export type JobFeatureIntentDocument = JobFeatureIntent & Document;
+
+@Schema({ timestamps: true, collection: 'job_feature_order_intents' })
+export class JobFeatureIntent {
+  @Prop({ type: String, required: true, index: true })
+  gatewayTxnRef: string; // vnp_TxnRef
+
+  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
+  accountId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Recruiter', required: true })
+  recruiterId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
+  companyId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Job', required: true })
+  jobId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'JobPackage', required: true })
+  packageId: Types.ObjectId;
+}
+
+export const JobFeatureIntentSchema = SchemaFactory.createForClass(JobFeatureIntent);
+
 

@@ -7,9 +7,11 @@ import { PaymentsController } from './controller/payments.controller';
 import { AdminBannerOrdersController } from './controller/admin.banner-orders.controller';
 import { RecruiterBannerOrdersController } from './controller/recruiter.banner-orders.controller';
 import { Recruiter, RecruiterSchema } from '../recruiters/schemas/recruiter.schema';
-import { BannerOrder, BannerOrderSchema, PaymentIntent, PaymentIntentSchema } from './payments.schema';
+import { BannerOrder, BannerOrderSchema, PaymentIntent, PaymentIntentSchema, JobFeatureOrder, JobFeatureOrderSchema, JobFeatureIntent, JobFeatureIntentSchema } from './payments.schema';
 import { BannerPackage, BannerPackageSchema } from '../banner-packages/schemas/banner-package.schema';
 import { Banner, BannerSchema } from '../banners/schemas/banner.schema';
+import { JobPackage, JobPackageSchema } from '../job-packages/schemas/job-package.schema';
+import { Job, JobSchema } from '../jobs/jobs.schema';
 
 @Module({
   imports: [
@@ -37,6 +39,11 @@ import { Banner, BannerSchema } from '../banners/schemas/banner.schema';
       { name: PaymentIntent.name, schema: PaymentIntentSchema },
       { name: BannerPackage.name, schema: BannerPackageSchema },
       { name: Banner.name, schema: BannerSchema },
+      // Job feature payments
+      { name: JobFeatureOrder.name, schema: JobFeatureOrderSchema },
+      { name: JobFeatureIntent.name, schema: JobFeatureIntentSchema },
+      { name: JobPackage.name, schema: JobPackageSchema },
+      { name: Job.name, schema: JobSchema },
     ]),
   ],
   controllers: [PaymentsController, AdminBannerOrdersController, RecruiterBannerOrdersController],

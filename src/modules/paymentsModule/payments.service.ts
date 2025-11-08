@@ -2,11 +2,13 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import * as moment from 'moment';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { BannerOrder, BannerOrderDocument, PaymentIntent, PaymentIntentDocument } from './payments.schema';
+import { BannerOrder, BannerOrderDocument, PaymentIntent, PaymentIntentDocument, JobFeatureOrder, JobFeatureOrderDocument, JobFeatureIntent, JobFeatureIntentDocument } from './payments.schema';
 import { Recruiter, RecruiterDocument } from '../recruiters/schemas/recruiter.schema';
 import { BannerPackage, BannerPackageDocument } from '../banner-packages/schemas/banner-package.schema';
 import { Banner, BannerDocument } from '../banners/schemas/banner.schema';
 import { VnpayService } from 'nestjs-vnpay';
+import { JobPackage, JobPackageDocument } from '../job-packages/schemas/job-package.schema';
+import { Job, JobDocument } from '../jobs/jobs.schema';
 
 @Injectable()
 export class PaymentsService {
@@ -18,6 +20,11 @@ export class PaymentsService {
     @InjectModel(Banner.name) private readonly bannerModel: Model<BannerDocument>,
     private readonly vnpayService: VnpayService,
     @InjectModel(PaymentIntent.name) private readonly intentModel: Model<PaymentIntentDocument>,
+    // Job feature models
+    @InjectModel(JobFeatureOrder.name) private readonly jfOrderModel: Model<JobFeatureOrderDocument>,
+    @InjectModel(JobFeatureIntent.name) private readonly jfIntentModel: Model<JobFeatureIntentDocument>,
+    @InjectModel(JobPackage.name) private readonly jobPkgModel: Model<JobPackageDocument>,
+    @InjectModel(Job.name) private readonly jobModel: Model<JobDocument>,
   ) {}
 
   async createPaymentOrder(body: any, ipAddr: string) {
@@ -61,6 +68,88 @@ export class PaymentsService {
     });
 
     return { paymentUrl, orderId: orderId };
+  }
+
+  // ================= JOB FEATURE PAYMENT FLOW =================
+  async createJobFeaturePayment(body: { packageId: string; jobId: string; accountId: string }, ipAddr: string) {
+    const vnp_ReturnUrl = `${process.env.BACKEND_URL}/payments/vnpay/job-feature/return`;
+
+    const pkg = await this.jobPkgModel.findById(new Types.ObjectId(body.packageId));
+    if (!pkg || !pkg.isActive) throw new BadRequestException('Gói đăng tin không hợp lệ');
+
+    const recruiter = await this.recruiterModel.findOne({ accountId: new Types.ObjectId(body.accountId) });
+    if (!recruiter || !recruiter.companyId) throw new BadRequestException('Recruiter chưa có công ty');
+
+    const job = await this.jobModel.findById(new Types.ObjectId(body.jobId));
+    if (!job) throw new BadRequestException('Không tìm thấy tin tuyển dụng');
+    // Một số bản ghi cũ có thể lưu recruiterId = accountId. Chấp nhận cả 2 để tương thích ngược
+    const ownsByRecruiterId = String(job.recruiterId) === String(recruiter._id);
+    const ownsByAccountId = String(job.recruiterId) === String(recruiter.accountId);
+    if (!ownsByRecruiterId && !ownsByAccountId) {
+      throw new BadRequestException('Bạn không sở hữu tin này');
+    }
+
+    // Ensure unique txn ref and proper VNPay amount (x100)
+    const orderId = `${moment().format('YYYYMMDDHHmmss')}${Math.floor(1000 + Math.random() * 9000)}`;
+    const paymentUrl = this.vnpayService.buildPaymentUrl({
+      vnp_Amount: Math.round(Number(pkg.price || 0) * 100),
+      vnp_IpAddr: ipAddr,
+      vnp_ReturnUrl,
+      vnp_TxnRef: orderId,
+      vnp_OrderInfo: `Thanh toan tin noi bat ${job.title}`,
+      vnp_BankCode: 'NCB',
+    });
+
+    await this.jfIntentModel.create({
+      gatewayTxnRef: orderId,
+      accountId: new Types.ObjectId(body.accountId),
+      recruiterId: recruiter._id,
+      companyId: recruiter.companyId,
+      jobId: new Types.ObjectId(body.jobId),
+      packageId: pkg._id,
+    });
+
+    return { paymentUrl, orderId };
+  }
+
+  async updateJobFeatureOrderStatusByTxnRef(txnRef: string, status: 'PENDING' | 'PAID' | 'FAILED' | 'CANCELLED', gatewayMeta: any) {
+    const existing = await this.jfOrderModel.findOne({ gatewayTxnRef: txnRef });
+    if (existing) {
+      existing.status = status;
+      existing.gatewayMeta = gatewayMeta || {};
+      await existing.save();
+      if (status === 'PAID') {
+        // ensure job is featured
+        await this.jobModel.updateOne({ _id: existing.jobId }, { isFeatured: true, featuredPackageId: existing.packageId });
+      }
+      return true;
+    }
+
+    if (status !== 'PAID') return true;
+
+    const intent = await this.jfIntentModel.findOne({ gatewayTxnRef: txnRef });
+    if (!intent) throw new BadRequestException('Không tìm thấy intent');
+
+    const pkg = await this.jobPkgModel.findById(intent.packageId);
+    if (!pkg) throw new BadRequestException('Gói không hợp lệ');
+
+    await this.jfOrderModel.create({
+      accountId: intent.accountId,
+      recruiterId: intent.recruiterId,
+      companyId: intent.companyId,
+      jobId: intent.jobId,
+      packageId: intent.packageId,
+      amount: pkg.price,
+      paymentMethod: 'vnpay',
+      status: 'PAID',
+      gatewayTxnRef: txnRef,
+      gatewayMeta: gatewayMeta || {},
+    });
+
+    await this.jobModel.updateOne({ _id: intent.jobId }, { isFeatured: true, featuredPackageId: intent.packageId });
+
+    await this.jfIntentModel.deleteOne({ _id: intent._id });
+    return true;
   }
 
   async verifyReturn(query: any) {

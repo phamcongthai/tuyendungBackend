@@ -137,4 +137,14 @@ export class UpdateJobDto {
   @IsOptional()
   @IsMongoId()
   jobCategoryId?: Types.ObjectId;
+
+  @ApiPropertyOptional({ description: 'Đánh dấu tin nổi bật (chỉ bật bằng hệ thống sau thanh toán)', example: false })
+  @IsOptional()
+  @IsBoolean()
+  isFeatured?: boolean;
+
+  @ApiPropertyOptional({ description: 'ID gói đăng tin đã mua để bật nổi bật', example: '507f1f77bcf86cd799439014' })
+  @IsOptional()
+  @IsMongoId()
+  featuredPackageId?: Types.ObjectId;
 }
